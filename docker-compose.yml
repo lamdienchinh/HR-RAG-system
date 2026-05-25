@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: rag-hr-postgres
+    environment:
+      POSTGRES_USER: rag
+      POSTGRES_PASSWORD: rag
+      POSTGRES_DB: rag_hr
+    ports:
+      - "5432:5432"
+    volumes:
+      - rag_hr_pgdata:/var/lib/postgresql/data
+      - ./scripts/db/init-multiple-dbs.sh:/docker-entrypoint-initdb.d/10-init-multiple-dbs.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rag -d rag_hr && pg_isready -U rag -d spec_workbench"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  rag_hr_pgdata:

@@ -1,0 +1,118 @@
+/* Global dark theme for RAG Seminar Slides */
+
+:root {
+  --slidev-theme-primary: #3b82f6;
+  --slidev-theme-accent: #10b981;
+  --slidev-theme-warning: #f59e0b;
+  --slidev-theme-danger: #ef4444;
+  --card-bg: rgb(30 41 59 / 0.8);
+  --card-border: rgb(100 116 139 / 0.4);
+  --card-glow: rgb(59 130 246 / 0.1);
+}
+
+/* Default dark background for all slides */
+.slidev-layout {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+  color: #f1f5f9;
+}
+
+/* Override headings */
+.slidev-layout h1 {
+  color: #f8fafc;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.slidev-layout h2 {
+  color: #e2e8f0;
+  font-weight: 800;
+}
+
+/* Glass card utility class */
+.glass-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(12px);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  box-shadow: 0 4px 24px rgb(0 0 0 / 0.3), inset 0 1px 0 rgb(255 255 255 / 0.05);
+}
+
+.glass-card-sm {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(12px);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  box-shadow: 0 2px 12px rgb(0 0 0 / 0.2);
+}
+
+/* Accent border variants */
+.border-glow-blue { border-color: rgb(59 130 246 / 0.5); box-shadow: 0 0 20px rgb(59 130 246 / 0.1); }
+.border-glow-emerald { border-color: rgb(16 185 129 / 0.5); box-shadow: 0 0 20px rgb(16 185 129 / 0.1); }
+.border-glow-amber { border-color: rgb(245 158 11 / 0.5); box-shadow: 0 0 20px rgb(245 158 11 / 0.1); }
+.border-glow-red { border-color: rgb(239 68 68 / 0.5); box-shadow: 0 0 20px rgb(239 68 68 / 0.1); }
+.border-glow-purple { border-color: rgb(168 85 247 / 0.5); box-shadow: 0 0 20px rgb(168 85 247 / 0.1); }
+
+/* Highlight box */
+.highlight-box {
+  background: linear-gradient(135deg, rgb(59 130 246 / 0.15), rgb(16 185 129 / 0.1));
+  border: 1px solid rgb(59 130 246 / 0.3);
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+/* Callout dark box */
+.callout-dark {
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  border: 1px solid rgb(100 116 139 / 0.3);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  color: #f8fafc;
+}
+
+/* Mermaid dark theme */
+.mermaid {
+  --mermaid-bg: transparent;
+}
+.mermaid .node rect,
+.mermaid .node polygon {
+  fill: #334155 !important;
+  stroke: #64748b !important;
+}
+.mermaid .node .label {
+  color: #f1f5f9 !important;
+}
+.mermaid .edgePath .path {
+  stroke: #64748b !important;
+}
+.mermaid .edgeLabel {
+  color: #cbd5e1 !important;
+  background: #1e293b !important;
+}
+
+/* v-click animation enhancement */
+.slidev-vclick-target {
+  transition: all 0.4s ease;
+}
+.slidev-vclick-hidden {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* Code blocks */
+.slidev-layout pre {
+  background: #0f172a !important;
+  border: 1px solid rgb(100 116 139 / 0.3);
+  border-radius: 0.75rem;
+}
+
+/* Stats/numbers emphasis */
+.stat-number {
+  font-size: 3rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #3b82f6, #10b981);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}

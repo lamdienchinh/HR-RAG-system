@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "WebSearch",
+      "Bash(npx vitest *)",
+      "Bash(cat)",
+      "Bash(npx tsx *)",
+      "WebFetch(domain:ts.llamaindex.ai)"
+    ]
+  }
+}

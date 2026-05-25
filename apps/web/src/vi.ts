@@ -1,0 +1,83 @@
+export const T = {
+  // Chat
+  welcomeMessage: 'Xin chào! Hãy hỏi tôi về chính sách nhân sự. Tôi sẽ truy xuất bằng chứng, chấm điểm và chỉ trả lời khi độ tin cậy đạt ngưỡng bạn cài đặt.',
+  placeholder: 'Hỏi về chính sách nhân sự...',
+  streaming: 'đang tạo câu trả lời...',
+
+  // Workflow status
+  ready: 'Sẵn sàng nhận câu hỏi về chính sách nhân sự.',
+  retrieving: 'Đang truy xuất bằng chứng...',
+  retrieved: (n: number) => `Đã truy xuất ${n} trích dẫn. Đang tạo câu trả lời.`,
+  done: (mode: string, n: number) => `Hoàn tất. Chế độ: ${mode}; trích dẫn: ${n}.`,
+  error: 'Lỗi. Kiểm tra API, env và cấu hình database.',
+  cleared: 'Đã xóa. Sẵn sàng nhận câu hỏi mới.',
+  apiError: (detail: string) => `Không thể trả lời do lỗi API: ${detail}`,
+
+  // Conversation
+  newConversation: 'Cuộc trò chuyện mới',
+  conversationAtLimit: 'Cuộc trò chuyện đã đạt giới hạn 50 tin nhắn. Hãy bắt đầu cuộc mới.',
+
+  // Settings
+  settingsTitle: 'Cài đặt',
+  settingsDescription: 'Điều chỉnh số chunk truy xuất và ngưỡng từ chối trả lời.',
+  topKChunks: 'Top-K chunks',
+  minEvidenceScore: 'Điểm bằng chứng tối thiểu',
+  minScoreExplanation: 'Nếu tất cả chunk truy xuất có điểm dưới giá trị này, trợ lý sẽ từ chối trả lời thay vì đưa ra câu trả lời không chính xác.',
+  googleSearch: 'Google Search tham khảo',
+  googleSearchEnabled: 'Tùy chọn Google Search grounding khi bằng chứng nội bộ yếu. Câu trả lời được đánh dấu là tham khảo.',
+  geminiModel: 'Model Gemini',
+  geminiModelAuto: 'Tự động (fallback qua nhiều model)',
+  geminiModelExplanation: 'Chọn model cụ thể hoặc để trống để thử lần lượt nhiều model.',
+  on: 'Bật',
+  off: 'Tắt',
+
+  // Evidence
+  evidenceTitle: 'Bằng chứng & Nguồn',
+  citations: 'trích dẫn',
+  highestScore: 'Điểm cao nhất',
+  threshold: 'Ngưỡng',
+  belowThreshold: 'Dưới ngưỡng — câu trả lời đã bị chặn hoặc dùng phương án dự phòng',
+  aboveThreshold: 'Đạt ngưỡng — bằng chứng đủ mạnh',
+  noEvidence: 'Chưa có bằng chứng. Đặt câu hỏi để xem các nguồn truy xuất.',
+  policyCitations: 'Trích dẫn chính sách',
+  externalSources: 'Nguồn web bên ngoài',
+
+  // Policy dashboard
+  newPolicy: 'Chính sách mới',
+  policyTitle: 'Tên chính sách',
+  category: 'Danh mục',
+  createAndReindex: 'Tạo & đánh chỉ mục',
+  policyLibrary: 'Thư viện chính sách',
+  all: 'Tất cả',
+  active: 'Hiện hành',
+  stale: 'Lỗi thời',
+  noMatch: 'Không có chính sách nào phù hợp.',
+  sourceEditor: 'Trình soạn thảo',
+  policies: 'chính sách',
+  selected: 'Đã chọn',
+  none: 'Không có',
+  status: 'Trạng thái',
+  clickToToggle: '(bấm để đổi)',
+  vectorSync: 'Đồng bộ vector',
+  onDemand: 'theo yêu cầu',
+  deleteBtn: 'Xóa',
+  incidentRule: 'Quy tắc sự cố',
+  saveBtn: 'Lưu',
+  saveAndReindex: 'Lưu & đánh chỉ mục',
+  policyDefaultStatus: 'Chọn chính sách, chỉnh sửa, rồi đánh chỉ mục vector.',
+  policySaving: 'Đang lưu chính sách...',
+  policySaved: 'Đã lưu. Hãy đánh chỉ mục để áp dụng thay đổi vào chat.',
+  policyReindexing: 'Đang đánh chỉ mục vector...',
+  policyIndexed: (chunks: number, policies: number) => `Đã đánh chỉ mục ${chunks} chunk từ ${policies} chính sách. Chat đã cập nhật.`,
+  policyCreating: 'Đang tạo chính sách và cập nhật vector...',
+  policyCreated: (title: string, chunks: number) => `Đã tạo "${title}" và đánh chỉ mục ${chunks} chunk.`,
+  policyDeleting: 'Đang xóa chính sách và cập nhật vector...',
+  policyDeleted: (title: string, chunks: number) => `Đã xóa "${title}" và đánh chỉ mục ${chunks} chunk còn lại.`,
+  policyMarking: (title: string, status: string) => `Đang đánh dấu "${title}" là ${status}...`,
+  policyMarked: (title: string, status: string) => `"${title}" hiện là ${status}.`,
+  deleteConfirm: (title: string) => `Xóa "${title}" khỏi thư viện chính sách?`,
+
+  // Navigation
+  navChat: 'Chat',
+  navPolicies: 'Chính sách',
+} as const;

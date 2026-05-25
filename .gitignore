@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.slidev/
+.DS_Store
+.env
+apps/*/dist/
+apps/web/.vite/
+*.tsbuildinfo
+repo-backup.git

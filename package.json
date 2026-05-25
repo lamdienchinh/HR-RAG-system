@@ -1,0 +1,27 @@
+{
+  "name": "hr-rag-demo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "HR RAG demo",
+  "type": "module",
+  "packageManager": "pnpm@10.17.1",
+  "engines": {
+    "node": ">=22 <25"
+  },
+  "scripts": {
+    "demo:api:dev": "pnpm --filter @rag-demo/api dev",
+    "demo:web:dev": "pnpm --filter @rag-demo/web dev",
+    "demo:db:migrate": "pnpm --filter @rag-demo/api db:migrate",
+    "demo:db:seed": "pnpm --filter @rag-demo/api db:seed",
+    "demo:db:reindex": "pnpm --filter @rag-demo/api db:reindex",
+    "demo:run": "node scripts/demo/run-all.mjs",
+    "demo:build": "pnpm --filter @rag-demo/api build && pnpm --filter @rag-demo/web build",
+    "demo:eval": "pnpm --filter @rag-demo/api eval"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  },
+  "dependencies": {
+    "zustand": "^5.0.14"
+  }
+}

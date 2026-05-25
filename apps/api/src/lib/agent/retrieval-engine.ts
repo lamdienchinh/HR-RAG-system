@@ -1,0 +1,198 @@
+import { retrieveChunks } from "../reindex.js";
+import type { RetrievedChunk } from "../types.js";
+import type { QueryAnalysis, RetrievalStrategy } from "./query-analyzer.js";
+
+// --- Types ---
+
+export interface RetrievalResult {
+  readonly chunks: readonly RetrievedChunk[];
+  readonly strategy: RetrievalStrategy;
+  readonly iterations: number;
+  readonly queries: readonly string[];
+}
+
+// --- Deduplication ---
+
+const deduplicateChunks = (
+  chunks: readonly RetrievedChunk[],
+): readonly RetrievedChunk[] => {
+  const seen = new Set<string>();
+  return chunks.filter((chunk) => {
+    if (seen.has(chunk.id)) return false;
+    seen.add(chunk.id);
+    return true;
+  });
+};
+
+// --- Strategy executors ---
+
+const executeDirect = async (
+  question: string,
+  topK: number,
+  isAdmin: boolean,
+): Promise<RetrievalResult> => {
+  const { chunks } = await retrieveChunks(question, topK, isAdmin);
+  return {
+    chunks,
+    strategy: "direct",
+    iterations: 1,
+    queries: [question],
+  };
+};
+
+const executeDecompose = async (
+  question: string,
+  subQueries: readonly string[],
+  topK: number,
+  isAdmin: boolean,
+): Promise<RetrievalResult> => {
+  const allChunks: RetrievedChunk[] = [];
+  const queries: string[] = [question];
+
+  // Retrieve for each sub-query
+  for (const subQuery of subQueries.slice(0, 3)) {
+    queries.push(subQuery);
+    const { chunks } = await retrieveChunks(
+      subQuery,
+      Math.ceil(topK / subQueries.length) + 2,
+      isAdmin,
+    );
+    allChunks.push(...chunks);
+  }
+
+  // Also retrieve with the original question to ensure coverage
+  const { chunks: originalChunks } = await retrieveChunks(
+    question,
+    topK,
+    isAdmin,
+  );
+  allChunks.push(...originalChunks);
+
+  // Deduplicate and take top results by score
+  const deduped = deduplicateChunks(allChunks);
+  const sorted = [...deduped].sort((a, b) => b.score - a.score).slice(0, topK);
+
+  return {
+    chunks: sorted,
+    strategy: "decompose",
+    iterations: subQueries.length + 1,
+    queries,
+  };
+};
+
+const executeMultiRetrieve = async (
+  question: string,
+  keyEntities: readonly string[],
+  topK: number,
+  isAdmin: boolean,
+): Promise<RetrievalResult> => {
+  const allChunks: RetrievedChunk[] = [];
+  const queries: string[] = [question];
+
+  // Retrieve with original question
+  const { chunks } = await retrieveChunks(question, topK, isAdmin);
+  allChunks.push(...chunks);
+
+  // Retrieve with entity-enriched queries
+  for (const entity of keyEntities.slice(0, 2)) {
+    const enrichedQuery = `${question} ${entity}`;
+    queries.push(enrichedQuery);
+    const { chunks: entityChunks } = await retrieveChunks(
+      enrichedQuery,
+      Math.ceil(topK / 2),
+      isAdmin,
+    );
+    allChunks.push(...entityChunks);
+  }
+
+  // Deduplicate and rank
+  const deduped = deduplicateChunks(allChunks);
+  const sorted = [...deduped].sort((a, b) => b.score - a.score).slice(0, topK);
+
+  return {
+    chunks: sorted,
+    strategy: "multi_retrieve",
+    iterations: 1 + Math.min(keyEntities.length, 2),
+    queries,
+  };
+};
+
+const executeClarify = async (
+  question: string,
+  topK: number,
+  isAdmin: boolean,
+): Promise<RetrievalResult> => {
+  // Still try to retrieve something, but with reduced expectations
+  const { chunks } = await retrieveChunks(question, topK, isAdmin);
+  return {
+    chunks,
+    strategy: "clarify",
+    iterations: 1,
+    queries: [question],
+  };
+};
+
+// --- Main entry point ---
+
+export interface RetrievalOptions {
+  readonly topK?: number;
+  readonly isAdmin?: boolean;
+}
+
+/**
+ * Execute retrieval using the strategy suggested by query analysis.
+ * Delegates to the appropriate retrieval strategy.
+ */
+export const executeRetrieval = async (
+  analysis: QueryAnalysis,
+  question: string,
+  options: RetrievalOptions = {},
+): Promise<RetrievalResult> => {
+  const topK = options.topK ?? 6;
+  const isAdmin = options.isAdmin ?? true;
+
+  switch (analysis.suggestedStrategy) {
+    case "direct":
+      return executeDirect(question, topK, isAdmin);
+
+    case "decompose":
+      if (analysis.subQueries.length > 0) {
+        return executeDecompose(question, analysis.subQueries, topK, isAdmin);
+      }
+      return executeDirect(question, topK, isAdmin);
+
+    case "multi_retrieve":
+      if (analysis.keyEntities.length > 0) {
+        return executeMultiRetrieve(
+          question,
+          analysis.keyEntities,
+          topK,
+          isAdmin,
+        );
+      }
+      return executeDirect(question, topK, isAdmin);
+
+    case "clarify":
+      return executeClarify(question, topK, isAdmin);
+
+    default:
+      return executeDirect(question, topK, isAdmin);
+  }
+};
+
+/**
+ * Re-retrieve with a refined query (used during self-reflection retry).
+ */
+export const refineRetrieve = async (
+  refinedQuery: string,
+  topK: number,
+  isAdmin: boolean = true,
+): Promise<RetrievalResult> => {
+  const { chunks } = await retrieveChunks(refinedQuery, topK, isAdmin);
+  return {
+    chunks,
+    strategy: "direct",
+    iterations: 1,
+    queries: [refinedQuery],
+  };
+};

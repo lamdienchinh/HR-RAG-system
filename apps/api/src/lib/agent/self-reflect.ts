@@ -150,7 +150,11 @@ Available evidence (policy chunks): ${chunks.length} chunks from policies: ${[..
 
 Evaluate this answer quality.`;
 
-    const result = await runGeminiPureAgent(prompt, REFLECTION_PROMPT);
+    const result = await runGeminiPureAgent(
+      prompt,
+      REFLECTION_PROMPT,
+      "gemini-2.5-flash-lite",
+    );
 
     if (result.text) {
       const reflection = parseReflectionFromText(result.text);

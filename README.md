@@ -1,6 +1,6 @@
-# Enterprise RAG Seminar
+# Enterprise RAG
 
-Buildable Slidev deck for a one-hour, pragmatic engineering seminar about Retrieval-Augmented Generation.
+Retrieval-Augmented Generation.
 
 ## Current scope
 
@@ -92,23 +92,3 @@ Demo technology stack:
 - Answer/citations: streaming deterministic extractive answer with citations, top-K setup, an evidence-score gate, and opt-in external-reference grounding.
 - Boundaries: no mandatory API key, no mandatory local LLM, no external search engine, and no LLM-as-judge.
 
-## Deck structure
-
-- `slides.md` is the only Slidev entrypoint.
-- `global-bottom.vue` renders page numbers across the deck.
-- `pages/*.md` files contain independently editable seminar sections.
-- `pages/00-title.md` owns the title and opening hero framing.
-- `pages/05-opening.md` owns the opening motivation and evidence-quality preview.
-- `pages/10-agenda.md` owns the 60-minute timing path.
-- `pages/20-ai-maturity.md` owns the prompt -> context -> agent -> controls framing with RAG focused on the context step.
-- `pages/30-rag-basics.md` owns No RAG vs RAG framing and the RAG fundamentals: chunks, embeddings, retrieval, context, citations, and traces.
-- `pages/35-break-approaches.md` owns the transition into adaptation-pattern comparison.
-- `pages/40-approach-compare.md` owns the fine-tuning vs long-context vs RAG comparison.
-- `pages/45-break-demo.md` owns the transition into demo learning-point placeholders.
-- `pages/50-demo.md` owns the HR RAG app demo learning points and run command.
-- `pages/90-recap.md` owns the final narrative recap.
-- `pages/99-thanks.md` owns the FYI / wrap-up and closing thank-you slides.
-
-## Roadmap boundary
-
-PDF export and the final delivery runbook are assigned to Phase 4.

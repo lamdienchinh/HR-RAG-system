@@ -154,6 +154,7 @@ export const analyzeQuery = async (
     const result = await runGeminiPureAgent(
       `Analyze this user message:\n\n"${question}"`,
       ANALYSIS_PROMPT,
+      "gemini-2.5-flash-lite",
     );
 
     if (result.text) {

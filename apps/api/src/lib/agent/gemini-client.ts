@@ -60,10 +60,23 @@ export interface AgentResult {
 
 const CANDIDATE_MODELS = [
   "gemini-3.5-flash",
-  "gemini-3.0-flash-preview",
   "gemini-2.5-flash",
+  "gemini-3-flash-preview",
   "gemini-2.0-flash",
-  "gemini-1.5-flash",
+  "gemini-2.0-flash-001",
+  "gemini-3.1-flash-lite",
+  "gemini-3.1-flash-lite-preview",
+  "gemini-2.5-flash-lite",
+  "gemini-2.0-flash-lite-001",
+  "gemini-2.0-flash-lite",
+  "gemini-flash-latest",
+  "gemini-flash-lite-latest",
+  "gemini-3.1-pro-preview",
+  "gemini-3.1-pro-preview-customtools",
+  "gemini-2.5-pro",
+  "gemini-3-pro-preview",
+  "gemini-pro-latest",
+  "gemini-2.5-computer-use-preview-10-2025",
 ];
 
 // ========================================================
@@ -91,12 +104,13 @@ const extractExternalSources = (
 export const runGeminiPureAgent = async (
   prompt: string,
   systemInstruction?: string,
+  model?: string,
 ): Promise<AgentResult> => {
   if (!config.geminiApiKey) {
     throw new Error("GEMINI_API_KEY is missing");
   }
 
-  const configuredModel = config.geminiModel || "gemini-2.5-flash";
+  const configuredModel = model || config.geminiModel || "gemini-2.5-flash";
   const modelsToTry = [...new Set([configuredModel, ...CANDIDATE_MODELS])];
   const errors: string[] = [];
 

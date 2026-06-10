@@ -46,3 +46,18 @@ export const getGreetingResponse = (): string => {
   const index = Math.floor(Math.random() * GREETING_RESPONSES.length);
   return GREETING_RESPONSES[index];
 };
+
+const THANKS_RESPONSES = [
+  "Không có gì! 😊 Nếu bạn có thêm câu hỏi về chính sách nhân sự, tôi sẵn sàng hỗ trợ.",
+  "Rất vui được giúp bạn! 🌟 Đừng ngại hỏi thêm nếu cần nhé.",
+  "Cảm ơn bạn! Nếu có thắc mắc khác về HR, hãy quay lại bất cứ lúc nào. 👋",
+  "Không có gì đâu! Chúc bạn một ngày tốt lành. 💼",
+];
+
+/**
+ * Get a friendly thanks/goodbye response.
+ */
+export const getThanksResponse = (): string => {
+  const index = Math.floor(Math.random() * THANKS_RESPONSES.length);
+  return THANKS_RESPONSES[index];
+};

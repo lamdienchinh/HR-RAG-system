@@ -1,7 +1,7 @@
 import { type Request, type Response } from "express";
 import { sanitizeInput } from "../lib/sanitize.js";
 import { analyzeQuery } from "../lib/agent/query-analyzer.js";
-import { getGreetingResponse } from "../lib/greeting.js";
+import { getGreetingResponse, getThanksResponse } from "../lib/greeting.js";
 import { retrieveChunks } from "../lib/reindex.js";
 import { answerQuestion, answerQuestionStream } from "../lib/answer.js";
 import { runAgent, type AgentOptions } from "../lib/agent/index.js";
@@ -32,6 +32,21 @@ export const askStandard = async (
         answer: getGreetingResponse(),
         mode: "gemini",
         model: "greeting-detector",
+        warning: null,
+        confidence: null,
+        citations: [],
+        retrievedChunks: [],
+        externalSources: [],
+        notFound: false,
+      });
+      return;
+    }
+    if (analysis.intent === "thanks") {
+      response.json({
+        question: body.question,
+        answer: getThanksResponse(),
+        mode: "gemini",
+        model: "intent-classifier",
         warning: null,
         confidence: null,
         citations: [],
@@ -114,6 +129,35 @@ export const askStream = async (
           answer: greetingAnswer,
           mode: "gemini",
           model: "greeting-detector",
+          warning: null,
+          confidence: null,
+          citations: [],
+          retrievedChunks: [],
+          externalSources: [],
+          notFound: false,
+        },
+      });
+      return;
+    }
+
+    if (analysis.intent === "thanks") {
+      const thanksAnswer = getThanksResponse();
+      sendStreamEvent(response, "evidence", {
+        question: body.question,
+        mode: "gemini",
+        model: "intent-classifier",
+        warning: null,
+        citations: [],
+        retrievedChunks: [],
+        externalSources: [],
+      });
+      await streamAnswerTokens(response, thanksAnswer);
+      sendStreamEvent(response, "done", {
+        result: {
+          question: body.question,
+          answer: thanksAnswer,
+          mode: "gemini",
+          model: "intent-classifier",
           warning: null,
           confidence: null,
           citations: [],

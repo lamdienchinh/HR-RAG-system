@@ -9,6 +9,7 @@ type QueryIntent =
   | "policy_lookup"
   | "meta"
   | "greeting"
+  | "thanks"
   | "off_topic"
   | "injection";
 type QueryComplexity = "simple" | "multi_aspect" | "ambiguous";
@@ -30,7 +31,8 @@ export interface QueryAnalysis {
 const ANALYSIS_PROMPT = `You are an expert HR policy query analyzer. Analyze the user's message and return a JSON object with these fields:
 
 - intent: one of:
-  - "greeting" — greeting, small talk, thanks, goodbye (no actual question)
+  - "greeting" — greeting, small talk (no actual question)
+  - "thanks" — thanking, goodbye
   - "factual" — simple fact lookup about HR policy
   - "procedural" — how-to, steps, process questions
   - "comparative" — comparing two or more things
@@ -52,7 +54,10 @@ Q: "Xin chào!"
 {"intent":"greeting","complexity":"simple","subQueries":[],"suggestedStrategy":"direct","keyEntities":[],"reasoning":"Pure greeting, no question content"}
 
 Q: "Cảm ơn bạn nhé!"
-{"intent":"greeting","complexity":"simple","subQueries":[],"suggestedStrategy":"direct","keyEntities":[],"reasoning":"Thank you message, no question"}
+{"intent":"thanks","complexity":"simple","subQueries":[],"suggestedStrategy":"direct","keyEntities":[],"reasoning":"Thank you message, no question"}
+
+Q: "Tạm biệt!"
+{"intent":"thanks","complexity":"simple","subQueries":[],"suggestedStrategy":"direct","keyEntities":[],"reasoning":"Goodbye message, ending conversation"}
 
 Q: "Nghỉ phép năm bao nhiêu ngày?"
 {"intent":"factual","complexity":"simple","subQueries":[],"suggestedStrategy":"direct","keyEntities":["nghỉ phép năm"],"reasoning":"Simple factual question about annual leave days"}
@@ -94,6 +99,7 @@ const parseAnalysisFromText = (text: string): QueryAnalysis | null => {
       "policy_lookup",
       "meta",
       "greeting",
+      "thanks",
       "off_topic",
       "injection",
     ]);

@@ -13,7 +13,7 @@ import {
 } from "../lib/conversations.js";
 import { sanitizeInput } from "../lib/sanitize.js";
 import { analyzeQuery } from "../lib/agent/query-analyzer.js";
-import { getGreetingResponse } from "../lib/greeting.js";
+import { getGreetingResponse, getThanksResponse } from "../lib/greeting.js";
 import { retrieveChunks } from "../lib/reindex.js";
 import { answerQuestion, answerQuestionStream } from "../lib/answer.js";
 import { runAgent, type AgentOptions } from "../lib/agent/index.js";
@@ -189,6 +189,37 @@ export const askConversationAgent = async (
           answer: greetingAnswer,
           mode: "gemini",
           model: "greeting-detector",
+          warning: null,
+          confidence: null,
+          citations: [],
+          retrievedChunks: [],
+          externalSources: [],
+          notFound: false,
+        },
+      });
+      return;
+    }
+
+    if (analysis.intent === "thanks") {
+      const thanksAnswer = getThanksResponse();
+      sendStreamEvent(response, "evidence", {
+        question: body.question,
+        mode: "gemini",
+        model: "intent-classifier",
+        warning: null,
+        citations: [],
+        retrievedChunks: [],
+        externalSources: [],
+        conversationStatus: await getConversationStatus(conversationId),
+      });
+      await streamAnswerTokens(response, thanksAnswer);
+      await addMessage(conversationId, "assistant", thanksAnswer, []);
+      sendStreamEvent(response, "done", {
+        result: {
+          question: body.question,
+          answer: thanksAnswer,
+          mode: "gemini",
+          model: "intent-classifier",
           warning: null,
           confidence: null,
           citations: [],
@@ -402,6 +433,37 @@ export const askConversationStandard = async (
           answer: greetingAnswer,
           mode: "gemini",
           model: "greeting-detector",
+          warning: null,
+          confidence: null,
+          citations: [],
+          retrievedChunks: [],
+          externalSources: [],
+          notFound: false,
+        },
+      });
+      return;
+    }
+
+    if (analysis.intent === "thanks") {
+      const thanksAnswer = getThanksResponse();
+      sendStreamEvent(response, "evidence", {
+        question: body.question,
+        mode: "gemini",
+        model: "intent-classifier",
+        warning: null,
+        citations: [],
+        retrievedChunks: [],
+        externalSources: [],
+        conversationStatus: await getConversationStatus(conversationId),
+      });
+      await streamAnswerTokens(response, thanksAnswer);
+      await addMessage(conversationId, "assistant", thanksAnswer, []);
+      sendStreamEvent(response, "done", {
+        result: {
+          question: body.question,
+          answer: thanksAnswer,
+          mode: "gemini",
+          model: "intent-classifier",
           warning: null,
           confidence: null,
           citations: [],

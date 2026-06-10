@@ -346,7 +346,7 @@ export const answerQuestion = async (
 
 // ── Streaming variant ─────────────────────────────────────────────
 
-export interface AnswerStreamEvent {
+interface AnswerStreamEvent {
   readonly type: "token" | "done";
   readonly text?: string;
   readonly result?: Omit<AskResult, "answer">;

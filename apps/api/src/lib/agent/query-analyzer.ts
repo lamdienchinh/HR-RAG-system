@@ -2,7 +2,7 @@ import { runGeminiPureAgent } from "./gemini-client.js";
 
 // --- Types ---
 
-export type QueryIntent =
+type QueryIntent =
   | "factual"
   | "procedural"
   | "comparative"
@@ -11,7 +11,7 @@ export type QueryIntent =
   | "greeting"
   | "off_topic"
   | "injection";
-export type QueryComplexity = "simple" | "multi_aspect" | "ambiguous";
+type QueryComplexity = "simple" | "multi_aspect" | "ambiguous";
 export type RetrievalStrategy =
   | "direct"
   | "decompose"

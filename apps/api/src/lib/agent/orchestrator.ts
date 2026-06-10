@@ -32,8 +32,8 @@ export interface AgentResult {
   readonly queryAnalysis: QueryAnalysis;
 }
 
-export type OnStepCallback = (step: AgentTraceStep) => void;
-export type OnAnalysisCallback = (analysis: QueryAnalysis) => void;
+type OnStepCallback = (step: AgentTraceStep) => void;
+type OnAnalysisCallback = (analysis: QueryAnalysis) => void;
 
 // --- Helpers ---
 

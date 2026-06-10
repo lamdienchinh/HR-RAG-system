@@ -134,7 +134,7 @@ const executeClarify = async (
 
 // --- Main entry point ---
 
-export interface RetrievalOptions {
+interface RetrievalOptions {
   readonly topK?: number;
   readonly isAdmin?: boolean;
 }
@@ -178,21 +178,4 @@ export const executeRetrieval = async (
     default:
       return executeDirect(question, topK, isAdmin);
   }
-};
-
-/**
- * Re-retrieve with a refined query (used during self-reflection retry).
- */
-export const refineRetrieve = async (
-  refinedQuery: string,
-  topK: number,
-  isAdmin: boolean = true,
-): Promise<RetrievalResult> => {
-  const { chunks } = await retrieveChunks(refinedQuery, topK, isAdmin);
-  return {
-    chunks,
-    strategy: "direct",
-    iterations: 1,
-    queries: [refinedQuery],
-  };
 };

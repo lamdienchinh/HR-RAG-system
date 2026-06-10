@@ -1,46 +1,8 @@
-import {
-  GoogleGenAI,
-  Type,
-  FunctionDeclaration,
-  Part,
-  GroundingChunk,
-} from "@google/genai";
+import { GoogleGenAI, GroundingChunk } from "@google/genai";
 import { config } from "../../config.js";
 
 // ========================================================
-// 1. ĐỊNH NGHĨA SEARCH TOOL (HÀM THỰC THI & SCHEMA)
-// ========================================================
-
-interface SearchArgs {
-  query: string;
-}
-
-const googleSearchFunction = async ({ query }: SearchArgs): Promise<string> => {
-  return `Kết quả tìm kiếm thực tế cho: "${query}" tại thời điểm hiện tại...`;
-};
-
-const googleSearchToolDeclaration: FunctionDeclaration = {
-  name: "googleSearch",
-  description:
-    "Tìm kiếm thông tin thời gian thực trên Internet khi dữ liệu hệ thống không có.",
-  parameters: {
-    type: Type.OBJECT,
-    properties: {
-      query: {
-        type: Type.STRING,
-        description: "Từ khóa cần tìm kiếm chính xác trên Google",
-      },
-    },
-    required: ["query"],
-  },
-};
-
-const functionsMap: Record<string, (args: any) => Promise<any>> = {
-  googleSearch: googleSearchFunction,
-};
-
-// ========================================================
-// 2. TYPES
+// 1. TYPES
 // ========================================================
 
 export interface ExternalSource {
@@ -55,7 +17,7 @@ export interface AgentResult {
 }
 
 // ========================================================
-// 3. CANDIDATE MODELS
+// 2. CANDIDATE MODELS
 // ========================================================
 
 const CANDIDATE_MODELS = [
@@ -80,7 +42,7 @@ const CANDIDATE_MODELS = [
 ];
 
 // ========================================================
-// 4. HELPER: Trích xuất grounding sources từ response
+// 3. HELPER: Trích xuất grounding sources từ response
 // ========================================================
 
 const extractExternalSources = (
@@ -97,8 +59,8 @@ const extractExternalSources = (
 };
 
 // ========================================================
-// 5. runGeminiPureAgent — dùng custom function calling tool
-//    (cho query-analyzer, self-reflect: không cần grounding)
+// 4. runGeminiPureAgent — simple chat, no tools/grounding
+//    (cho query-analyzer: phân loại intent)
 // ========================================================
 
 export const runGeminiPureAgent = async (
@@ -123,39 +85,10 @@ export const runGeminiPureAgent = async (
         config: {
           systemInstruction:
             systemInstruction || "You are a helpful assistant.",
-          tools: [{ functionDeclarations: [googleSearchToolDeclaration] }],
         },
       });
 
-      let response = await chat.sendMessage({ message: prompt });
-
-      // AUTO-FUNCTION CALLING LOOP
-      while (response.functionCalls && response.functionCalls.length > 0) {
-        const toolResponseParts: Part[] = [];
-
-        for (const call of response.functionCalls) {
-          const { name, args, id } = call;
-          if (!name) continue;
-
-          const targetFunction = functionsMap[name];
-          if (targetFunction) {
-            const functionResult = await targetFunction(args);
-            toolResponseParts.push({
-              functionResponse: {
-                name,
-                response: { result: functionResult },
-                id: id || "",
-              },
-            });
-          }
-        }
-
-        if (toolResponseParts.length > 0) {
-          response = await chat.sendMessage({ message: toolResponseParts });
-        } else {
-          break;
-        }
-      }
+      const response = await chat.sendMessage({ message: prompt });
 
       return {
         text: response.text || "No response text generated.",
@@ -176,10 +109,10 @@ export const runGeminiPureAgent = async (
 };
 
 // ========================================================
-// 6. StreamChunk — yielded by streaming functions
+// 5. StreamChunk — yielded by streaming functions
 // ========================================================
 
-export interface StreamChunk {
+interface StreamChunk {
   readonly text: string;
   readonly done: boolean;
   readonly model: string;
@@ -187,7 +120,7 @@ export interface StreamChunk {
 }
 
 // ========================================================
-// 7. runGeminiWithGroundingStream — streaming version
+// 6. runGeminiWithGroundingStream — streaming version
 //    Yields real tokens from Gemini as they arrive.
 // ========================================================
 
@@ -260,7 +193,7 @@ export async function* runGeminiWithGroundingStream(
 }
 
 // ========================================================
-// 8. runGeminiWithGrounding — dùng Google Search grounding
+// 7. runGeminiWithGrounding — dùng Google Search grounding
 //    (cho answer.ts: cần externalSources từ grounding metadata)
 // ========================================================
 

@@ -1,50 +1,58 @@
-import { Bot, FileText, User } from "lucide-react";
+import { Bot, User } from "lucide-react";
 import Markdown from "react-markdown";
 
 import type { ChatMessage, CitationRef } from "../../lib/types";
-import { CITATION_PATTERN, extractUsedCitations } from "./citation-utils";
+import { extractUsedCitations } from "./citation-utils";
 
-const citationBadgeComponents = {
-  p: ({ children }: { readonly children?: React.ReactNode }) => {
-    if (typeof children !== "string") return <p>{children}</p>;
-    const parts: React.ReactNode[] = [];
-    let lastIndex = 0;
-    for (const match of children.matchAll(CITATION_PATTERN)) {
-      if (match.index > lastIndex) parts.push(children.slice(lastIndex, match.index));
-      parts.push(
-        <span key={match.index} className="citation-badge">{match[0]}</span>,
-      );
-      lastIndex = match.index! + match[0].length;
-    }
-    if (lastIndex < children.length) parts.push(children.slice(lastIndex));
-    return <p>{parts.length > 0 ? parts : children}</p>;
-  },
-};
-
-export const ChatBubble = ({ message }: { readonly message: ChatMessage }) => {
+export const ChatBubble = ({
+  message,
+  isStreaming = false,
+}: {
+  readonly message: ChatMessage;
+  readonly isStreaming?: boolean;
+}) => {
   const isAssistant = message.role === "assistant";
   const citations = message.citations;
+  const showStreaming = isStreaming && isAssistant;
 
-  const usedCitationNums = isAssistant ? extractUsedCitations(message.content) : [];
+  const usedCitationNums = isAssistant
+    ? extractUsedCitations(message.content)
+    : [];
   const usedCitations = usedCitationNums
     .map((n) => ({ n, ref: citations?.[n - 1] }))
     .filter((item): item is { n: number; ref: CitationRef } => !!item.ref);
 
   return (
-    <article className={`flex items-start gap-3 ${isAssistant ? "" : "flex-row-reverse"}`}>
-      <div className={`mt-0.5 grid size-8 shrink-0 place-items-center rounded-full ${
-        isAssistant ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white" : "bg-slate-200 text-slate-600"
-      }`}>
+    <article
+      className={`flex items-start gap-3 ${isAssistant ? "" : "flex-row-reverse"}`}
+    >
+      <div
+        className={`mt-0.5 grid size-8 shrink-0 place-items-center rounded-full ${
+          isAssistant
+            ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white"
+            : "bg-slate-200 text-slate-600"
+        }`}
+      >
         {isAssistant ? <Bot className="size-4" /> : <User className="size-4" />}
       </div>
-      <div className={`min-w-0 max-w-[75%] ${message.isError ? "rounded-2xl ring-2 ring-red-200" : ""}`}>
-        {message.content.length > 0 && (
-          <div className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-            isAssistant ? "bg-white shadow-sm ring-1 ring-slate-100" : "bg-slate-900 text-white"
-          }`}>
+      <div
+        className={`min-w-0 max-w-[75%] ${message.isError ? "rounded-2xl ring-2 ring-red-200" : ""}`}
+      >
+        {(message.content.length > 0 || showStreaming) && (
+          <div
+            className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+              isAssistant
+                ? "bg-white shadow-sm ring-1 ring-slate-100"
+                : "bg-slate-900 text-white"
+            }`}
+          >
             {isAssistant ? (
-              <div className="chat-markdown">
-                <Markdown components={citationBadgeComponents}>{message.content}</Markdown>
+              <div className={`chat-markdown${showStreaming ? " streaming" : ""}`}>
+                {message.content.length > 0 ? (
+                  <Markdown>{message.content}</Markdown>
+                ) : (
+                  <span className="streaming-cursor" />
+                )}
               </div>
             ) : (
               <p className="whitespace-pre-wrap">{message.content}</p>

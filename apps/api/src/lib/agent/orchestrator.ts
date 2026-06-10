@@ -1,4 +1,4 @@
-import { answerQuestion, type AnswerOptions } from "../answer.js";
+import { answerQuestion, answerQuestionStream, type AnswerOptions, type AnswerStreamOptions } from "../answer.js";
 import type { RetrievedChunk } from "../types.js";
 import { analyzeQuery, type QueryAnalysis } from "./query-analyzer.js";
 import { executeRetrieval } from "./retrieval-engine.js";
@@ -64,6 +64,7 @@ export interface AgentOptions {
   }[];
   readonly onStep?: OnStepCallback;
   readonly onAnalysis?: OnAnalysisCallback;
+  readonly onToken?: (text: string) => void;
 }
 
 /**
@@ -121,8 +122,71 @@ export const runAgent = async (
     ),
   );
 
-  // Step 3: Generate answer
+  // Step 3: Generate answer (streaming if onToken provided)
   const scoreStart = Date.now();
+
+  if (options.onToken) {
+    // Real streaming path
+    let answerText = "";
+    let answerResult: Omit<AgentResult, "answer" | "agentTrace" | "iterations" | "strategy" | "queryAnalysis"> = {
+      question,
+      mode: "gemini" as const,
+      model: "",
+      warning: null,
+      citations: [],
+      retrievedChunks: retrievalResult.chunks,
+    };
+
+    const streamOptions: AnswerStreamOptions = {
+      ...answerOptions,
+      onToken: options.onToken,
+    };
+
+    for await (const event of answerQuestionStream(question, retrievalResult.chunks, streamOptions)) {
+      if (event.type === "token" && event.text) {
+        answerText += event.text;
+      } else if (event.type === "done" && event.result) {
+        answerResult = {
+          question,
+          mode: event.result.mode,
+          model: event.result.model,
+          warning: event.result.warning,
+          citations: event.result.citations,
+          retrievedChunks: event.result.retrievedChunks,
+        };
+      }
+    }
+
+    emit(
+      createTraceStep(
+        "generate",
+        "Answer",
+        `${answerResult.citations.length} citations, Mode: ${answerResult.mode}, Model: ${answerResult.model}`,
+        Date.now() - scoreStart,
+      ),
+    );
+
+    const agentTrace: AgentTrace = {
+      steps: traceSteps,
+      totalDuration: Date.now() - totalStart,
+    };
+
+    return {
+      question,
+      answer: answerText,
+      mode: answerResult.mode,
+      model: answerResult.model,
+      warning: answerResult.warning,
+      citations: answerResult.citations,
+      retrievedChunks: answerResult.retrievedChunks,
+      agentTrace,
+      iterations: 1,
+      strategy: retrievalResult.strategy,
+      queryAnalysis,
+    };
+  }
+
+  // Non-streaming path (original)
   const answerResult = await answerQuestion(
     question,
     retrievalResult.chunks,

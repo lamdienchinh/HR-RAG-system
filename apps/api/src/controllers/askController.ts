@@ -3,7 +3,7 @@ import { sanitizeInput } from "../lib/sanitize.js";
 import { analyzeQuery } from "../lib/agent/query-analyzer.js";
 import { getGreetingResponse } from "../lib/greeting.js";
 import { retrieveChunks } from "../lib/reindex.js";
-import { answerQuestion } from "../lib/answer.js";
+import { answerQuestion, answerQuestionStream } from "../lib/answer.js";
 import { runAgent, type AgentOptions } from "../lib/agent/index.js";
 import {
   sendError,
@@ -167,22 +167,37 @@ export const askStream = async (
       body.topK,
       isAdmin,
     );
-    const result = await answerQuestion(
+
+    let fullAnswer = "";
+    let doneResult: Record<string, unknown> | null = null;
+
+    for await (const event of answerQuestionStream(
       sanitizeResult.cleaned,
       retrievedChunks,
       body.options,
-    );
-    sendStreamEvent(response, "evidence", {
-      question: result.question,
-      mode: result.mode,
-      model: result.model,
-      warning: result.warning,
-      citations: result.citations,
-      retrievedChunks: result.retrievedChunks,
-      externalSources: result.externalSources,
-    });
-    await streamAnswerTokens(response, result.answer);
-    sendStreamEvent(response, "done", { result });
+    )) {
+      if (event.type === "token" && event.text) {
+        fullAnswer += event.text;
+        sendStreamEvent(response, "token", { text: event.text });
+      } else if (event.type === "done" && event.result) {
+        doneResult = {
+          ...event.result,
+          question: sanitizeResult.cleaned,
+          answer: fullAnswer,
+        };
+        sendStreamEvent(response, "evidence", {
+          question: sanitizeResult.cleaned,
+          mode: event.result.mode,
+          model: event.result.model,
+          warning: event.result.warning,
+          citations: event.result.citations,
+          retrievedChunks: event.result.retrievedChunks,
+          externalSources: event.result.externalSources,
+        });
+      }
+    }
+
+    sendStreamEvent(response, "done", { result: doneResult });
   } catch (error) {
     sendStreamEvent(response, "error", {
       error: error instanceof Error ? error.message : String(error),
@@ -231,6 +246,9 @@ export const askAgent = async (
           unknown
         >);
       },
+      onToken: (text) => {
+        sendStreamEvent(response, "token", { text });
+      },
     });
 
     sendStreamEvent(response, "evidence", {
@@ -242,7 +260,6 @@ export const askAgent = async (
       retrievedChunks: result.retrievedChunks,
       externalSources: [],
     });
-    await streamAnswerTokens(response, result.answer, 10);
     sendStreamEvent(response, "done", {
       result: {
         question: result.question,

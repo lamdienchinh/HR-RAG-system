@@ -176,7 +176,91 @@ export const runGeminiPureAgent = async (
 };
 
 // ========================================================
-// 6. runGeminiWithGrounding — dùng Google Search grounding
+// 6. StreamChunk — yielded by streaming functions
+// ========================================================
+
+export interface StreamChunk {
+  readonly text: string;
+  readonly done: boolean;
+  readonly model: string;
+  readonly externalSources: readonly ExternalSource[];
+}
+
+// ========================================================
+// 7. runGeminiWithGroundingStream — streaming version
+//    Yields real tokens from Gemini as they arrive.
+// ========================================================
+
+export async function* runGeminiWithGroundingStream(
+  prompt: string,
+  systemInstruction?: string,
+  useGoogleSearch: boolean = false,
+  preferredModel?: string,
+): AsyncGenerator<StreamChunk> {
+  if (!config.geminiApiKey) {
+    throw new Error("GEMINI_API_KEY is missing");
+  }
+
+  const configuredModel =
+    preferredModel || config.geminiModel || "gemini-2.5-flash";
+  const modelsToTry = [...new Set([configuredModel, ...CANDIDATE_MODELS])];
+  const errors: string[] = [];
+
+  const ai = new GoogleGenAI({ apiKey: config.geminiApiKey });
+
+  for (const modelName of modelsToTry) {
+    try {
+      const tools = useGoogleSearch ? [{ googleSearch: {} }] : undefined;
+
+      const stream = await ai.models.generateContentStream({
+        model: modelName,
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        config: {
+          systemInstruction:
+            systemInstruction || "You are a helpful assistant.",
+          ...(tools ? { tools } : {}),
+        },
+      });
+
+      let hasText = false;
+      let externalSources: readonly ExternalSource[] = [];
+
+      for await (const chunk of stream) {
+        const chunkText = chunk.text ?? "";
+        if (chunkText) hasText = true;
+
+        // Extract grounding metadata from any chunk that has it
+        const groundingChunks =
+          chunk.candidates?.[0]?.groundingMetadata?.groundingChunks;
+        if (groundingChunks) {
+          externalSources = extractExternalSources(groundingChunks);
+        }
+
+        if (chunkText) {
+          yield { text: chunkText, done: false, model: modelName, externalSources: [] };
+        }
+      }
+
+      if (!hasText) throw new Error("Empty response text");
+
+      // Final chunk with metadata
+      yield { text: "", done: true, model: modelName, externalSources };
+      return;
+    } catch (error) {
+      errors.push(error instanceof Error ? error.message : String(error));
+      console.warn(
+        `[Grounding Stream Warning] Model ${modelName} thất bại: ${error}. Đang thử model tiếp theo...`,
+      );
+    }
+  }
+
+  throw new Error(
+    `Tất cả các model Gemini đều thất bại. Lỗi cuối cùng: ${errors.at(-1)}`,
+  );
+}
+
+// ========================================================
+// 8. runGeminiWithGrounding — dùng Google Search grounding
 //    (cho answer.ts: cần externalSources từ grounding metadata)
 // ========================================================
 

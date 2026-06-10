@@ -1,5 +1,6 @@
 import {
   runGeminiWithGrounding,
+  runGeminiWithGroundingStream,
   type ExternalSource,
 } from "./agent/gemini-client.js";
 import type { AskResult, RetrievedChunk } from "./types.js";
@@ -341,4 +342,174 @@ export const answerQuestion = async (
       `Gemini unavailable: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
+};
+
+// ── Streaming variant ─────────────────────────────────────────────
+
+export interface AnswerStreamEvent {
+  readonly type: "token" | "done";
+  readonly text?: string;
+  readonly result?: Omit<AskResult, "answer">;
+}
+
+export interface AnswerStreamOptions extends AnswerOptions {
+  readonly onToken?: (text: string) => void;
+}
+
+/**
+ * Streaming version of answerQuestion().
+ * Yields token events as Gemini generates them, then a final "done" event with metadata.
+ * Also calls onToken callback for each token (useful for orchestrator forwarding).
+ */
+export const answerQuestionStream = async function* (
+  question: string,
+  retrievedChunks: readonly RetrievedChunk[],
+  options: AnswerStreamOptions,
+): AsyncGenerator<AnswerStreamEvent> {
+  const thresholdedChunks = retrievedChunks.filter(
+    (chunk) => chunk.score >= options.minScore,
+  );
+  const currentChunks = thresholdedChunks.filter(
+    (chunk) => chunk.status === "current",
+  );
+  const answerChunks =
+    currentChunks.length > 0 ? currentChunks : thresholdedChunks;
+
+  // No chunks → not found or external reference (no real streaming)
+  if (answerChunks.length === 0) {
+    if (options.allowExternalSearch) {
+      try {
+        const result = await createExternalReferenceResult(
+          question,
+          retrievedChunks,
+          [],
+          "No company policy evidence met the configured threshold.",
+        );
+        yield { type: "token", text: result.answer };
+        options.onToken?.(result.answer);
+        const { answer: _, ...meta } = result;
+        yield { type: "done", result: meta };
+        return;
+      } catch (error) {
+        const result = createNotFoundResult(
+          question,
+          retrievedChunks,
+          [],
+          `No evidence and external search failed: ${error instanceof Error ? error.message : String(error)}`,
+        );
+        yield { type: "token", text: result.answer };
+        options.onToken?.(result.answer);
+        const { answer: _, ...meta } = result;
+        yield { type: "done", result: meta };
+        return;
+      }
+    }
+    const result = createNotFoundResult(
+      question,
+      retrievedChunks,
+      [],
+      "No policy evidence found.",
+    );
+    yield { type: "token", text: result.answer };
+    options.onToken?.(result.answer);
+    const { answer: _, ...meta } = result;
+    yield { type: "done", result: meta };
+    return;
+  }
+
+  // Main Gemini streaming path
+  const prompt = composeGeminiPrompt(
+    question,
+    answerChunks,
+    options.allowExternalSearch,
+    options.conversationHistory,
+  );
+
+  // Helper: consume a Gemini stream, yield token events, return success flag
+  const streamFromGemini = async function* (
+    useSearch: boolean,
+  ): AsyncGenerator<AnswerStreamEvent> {
+    let collected = "";
+    let model = "";
+    let externalSources: readonly ExternalSource[] = [];
+
+    const stream = runGeminiWithGroundingStream(
+      prompt,
+      undefined,
+      useSearch,
+      options.geminiModel,
+    );
+    for await (const chunk of stream) {
+      if (chunk.done) {
+        model = chunk.model;
+        externalSources = chunk.externalSources;
+        continue;
+      }
+      collected += chunk.text;
+      options.onToken?.(chunk.text);
+      yield { type: "token", text: chunk.text };
+    }
+
+    yield {
+      type: "done",
+      result: {
+        question,
+        mode: "gemini",
+        model,
+        warning: null,
+        citations: answerChunks,
+        retrievedChunks,
+        externalSources,
+        notFound: false,
+      },
+    };
+  };
+
+  // Try with Google Search first if allowed
+  if (options.allowExternalSearch) {
+    try {
+      yield* streamFromGemini(true);
+      return;
+    } catch {
+      // Fallback to no search
+    }
+  }
+
+  // Try without Google Search
+  try {
+    yield* streamFromGemini(false);
+    return;
+  } catch {
+    // Fall through to external reference / not found
+  }
+
+  // All Gemini attempts failed — try external reference or not found
+  if (options.allowExternalSearch) {
+    try {
+      const result = await createExternalReferenceResult(
+        question,
+        retrievedChunks,
+        answerChunks,
+        "Gemini unavailable. Using external reference.",
+      );
+      yield { type: "token", text: result.answer };
+      options.onToken?.(result.answer);
+      const { answer: _, ...meta } = result;
+      yield { type: "done", result: meta };
+      return;
+    } catch {
+      // Fall through
+    }
+  }
+
+  const result = createNotFoundResult(
+    question,
+    retrievedChunks,
+    answerChunks,
+    "Gemini and external reference both failed.",
+  );
+  yield { type: "token", text: result.answer };
+  options.onToken?.(result.answer);
+  const { answer: _, ...meta } = result;
+  yield { type: "done", result: meta };
 };

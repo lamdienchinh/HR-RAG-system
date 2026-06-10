@@ -15,7 +15,7 @@ import { sanitizeInput } from "../lib/sanitize.js";
 import { analyzeQuery } from "../lib/agent/query-analyzer.js";
 import { getGreetingResponse } from "../lib/greeting.js";
 import { retrieveChunks } from "../lib/reindex.js";
-import { answerQuestion } from "../lib/answer.js";
+import { answerQuestion, answerQuestionStream } from "../lib/answer.js";
 import { runAgent, type AgentOptions } from "../lib/agent/index.js";
 import {
   sendError,
@@ -301,6 +301,9 @@ export const askConversationAgent = async (
           unknown
         >);
       },
+      onToken: (text) => {
+        sendStreamEvent(response, "token", { text });
+      },
     });
 
     sendStreamEvent(response, "evidence", {
@@ -313,7 +316,6 @@ export const askConversationAgent = async (
       externalSources: [],
       conversationStatus: await getConversationStatus(conversationId),
     });
-    await streamAnswerTokens(response, result.answer, 10);
 
     const citationRefs = (result.citations ?? []).map((c) => ({
       policyId: c.policyId,
@@ -495,33 +497,45 @@ export const askConversationStandard = async (
       .filter((m) => m.content !== sanitizeResult.cleaned)
       .map((m) => ({ role: m.role, content: m.content }));
 
-    const result = await answerQuestion(
+    let fullAnswer = "";
+    let doneResult: Record<string, unknown> | null = null;
+
+    for await (const event of answerQuestionStream(
       sanitizeResult.cleaned,
       retrievedChunks,
-      { ...body.options, conversationHistory }
-    );
+      { ...body.options, conversationHistory },
+    )) {
+      if (event.type === "token" && event.text) {
+        fullAnswer += event.text;
+        sendStreamEvent(response, "token", { text: event.text });
+      } else if (event.type === "done" && event.result) {
+        doneResult = {
+          ...event.result,
+          question: sanitizeResult.cleaned,
+          answer: fullAnswer,
+        };
+        sendStreamEvent(response, "evidence", {
+          question: sanitizeResult.cleaned,
+          mode: event.result.mode,
+          model: event.result.model,
+          warning: event.result.warning,
+          citations: event.result.citations,
+          retrievedChunks: event.result.retrievedChunks,
+          externalSources: event.result.externalSources,
+          conversationStatus: await getConversationStatus(conversationId),
+        });
+      }
+    }
 
-    sendStreamEvent(response, "evidence", {
-      question: result.question,
-      mode: result.mode,
-      model: result.model,
-      warning: result.warning,
-      citations: result.citations,
-      retrievedChunks: result.retrievedChunks,
-      externalSources: result.externalSources,
-      conversationStatus: await getConversationStatus(conversationId),
-    });
-    await streamAnswerTokens(response, result.answer);
-
-    const citationRefs = (result.citations ?? []).map((c) => ({
+    const citationRefs = ((doneResult?.citations as typeof retrievedChunks) ?? []).map((c) => ({
       policyId: c.policyId,
       title: c.title,
       version: c.version,
       status: c.status,
     }));
-    await addMessage(conversationId, "assistant", result.answer, citationRefs);
+    await addMessage(conversationId, "assistant", fullAnswer, citationRefs);
 
-    sendStreamEvent(response, "done", { result });
+    sendStreamEvent(response, "done", { result: doneResult });
   } catch (error) {
     sendStreamEvent(response, "error", {
       error: error instanceof Error ? error.message : String(error),

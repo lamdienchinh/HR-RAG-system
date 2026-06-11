@@ -3,7 +3,6 @@ import type { RetrievedChunk } from "../types.js";
 import type { QueryAnalysis, RetrievalStrategy } from "./query-analyzer.js";
 
 // --- Types ---
-
 export interface RetrievalResult {
   readonly chunks: readonly RetrievedChunk[];
   readonly strategy: RetrievalStrategy;
@@ -11,21 +10,33 @@ export interface RetrievalResult {
   readonly queries: readonly string[];
 }
 
-// --- Deduplication ---
-
+/**
+ * Deduplicates retrieved chunks by keeping the occurrence with the HIGHEST score.
+ *
+ * WHY IS IT NEEDED: Prevents sub-queries (which execute first with lower semantic matches)
+ * from pre-empting and locking out high-scoring exact matches returned by the original query.
+ *
+ * EXAMPLE:
+ *  - Input: [ { id: "p1#c02", score: 0.4 }, { id: "p1#c02", score: 0.9 } ]
+ *  - Output: [ { id: "p1#c02", score: 0.9 } ]
+ */
 const deduplicateChunks = (
   chunks: readonly RetrievedChunk[],
 ): readonly RetrievedChunk[] => {
-  const seen = new Set<string>();
-  return chunks.filter((chunk) => {
-    if (seen.has(chunk.id)) return false;
-    seen.add(chunk.id);
-    return true;
-  });
+  const bestChunks = new Map<string, RetrievedChunk>();
+
+  for (const chunk of chunks) {
+    const existing = bestChunks.get(chunk.id);
+    // Keep the chunk only if it hasn't been seen, or if the new one has a higher score
+    if (!existing || chunk.score > existing.score) {
+      bestChunks.set(chunk.id, chunk);
+    }
+  }
+
+  return Array.from(bestChunks.values());
 };
 
 // --- Strategy executors ---
-
 const executeDirect = async (
   question: string,
   topK: number,
@@ -68,7 +79,7 @@ const executeDecompose = async (
   );
   allChunks.push(...originalChunks);
 
-  // Deduplicate and take top results by score
+  // Deduplicate properly and take top results by score
   const deduped = deduplicateChunks(allChunks);
   const sorted = [...deduped].sort((a, b) => b.score - a.score).slice(0, topK);
 
@@ -105,7 +116,7 @@ const executeMultiRetrieve = async (
     allChunks.push(...entityChunks);
   }
 
-  // Deduplicate and rank
+  // Deduplicate properly and rank
   const deduped = deduplicateChunks(allChunks);
   const sorted = [...deduped].sort((a, b) => b.score - a.score).slice(0, topK);
 
@@ -122,7 +133,6 @@ const executeClarify = async (
   topK: number,
   isAdmin: boolean,
 ): Promise<RetrievalResult> => {
-  // Still try to retrieve something, but with reduced expectations
   const { chunks } = await retrieveChunks(question, topK, isAdmin);
   return {
     chunks,
@@ -133,16 +143,11 @@ const executeClarify = async (
 };
 
 // --- Main entry point ---
-
 interface RetrievalOptions {
   readonly topK?: number;
   readonly isAdmin?: boolean;
 }
 
-/**
- * Execute retrieval using the strategy suggested by query analysis.
- * Delegates to the appropriate retrieval strategy.
- */
 export const executeRetrieval = async (
   analysis: QueryAnalysis,
   question: string,
@@ -154,13 +159,11 @@ export const executeRetrieval = async (
   switch (analysis.suggestedStrategy) {
     case "direct":
       return executeDirect(question, topK, isAdmin);
-
     case "decompose":
       if (analysis.subQueries.length > 0) {
         return executeDecompose(question, analysis.subQueries, topK, isAdmin);
       }
       return executeDirect(question, topK, isAdmin);
-
     case "multi_retrieve":
       if (analysis.keyEntities.length > 0) {
         return executeMultiRetrieve(
@@ -171,10 +174,8 @@ export const executeRetrieval = async (
         );
       }
       return executeDirect(question, topK, isAdmin);
-
     case "clarify":
       return executeClarify(question, topK, isAdmin);
-
     default:
       return executeDirect(question, topK, isAdmin);
   }

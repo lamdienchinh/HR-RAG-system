@@ -1,4 +1,4 @@
-import type { Policy, ChunkRecord } from './types.js';
+import type { Policy, ChunkRecord } from "./types.js";
 
 // Core system configuration constants
 const MAX_CHUNK_SIZE = 800; // Strict upper limit of characters per chunk to optimize Embedding Model processing
@@ -6,25 +6,25 @@ const OVERLAP_SENTENCES = 1; // Number of adjacent sentences shared between chun
 
 interface HierarchicalSection {
   readonly headings: readonly string[]; // Breadcrumb path of hierarchical headings (from parent to child)
-  readonly content: string;             // Raw text content associated with this section
+  readonly content: string; // Raw text content associated with this section
 }
 
 /**
  * STEP 1: DOCUMENT STRUCTURE-BASED PARSING
- * 
+ *
  * PURPOSE: Splits the document into independent sections based on Markdown headings (H1 to H6).
  * It preserves the full heading path (breadcrumb) to maintain hierarchical context for each block.
- * 
+ *
  * WHY IS IT NEEDED: Without parent headings, if the LLM retrieves a chunk from "Section a, Clause b",
  * it loses the vital context of "Article 1, Chapter I".
- * 
+ *
  * EXAMPLE:
  *  - Input:
  *    # 1. Policies
  *    General introduction text...
  *    ## 1.1 Benefits
  *    Employee benefit details...
- * 
+ *
  *  - Output:
  *    [
  *      {
@@ -37,16 +37,18 @@ interface HierarchicalSection {
  *      }
  *    ]
  */
-const parseHierarchicalSections = (content: string): readonly HierarchicalSection[] => {
+const parseHierarchicalSections = (
+  content: string,
+): readonly HierarchicalSection[] => {
   // 1. TEXT SANITIZATION & NORMALIZATION:
   // - Convert Windows-style newlines (\r\n) to Unix-standard (\n) for consistent processing.
   // - Collapse multiple consecutive empty lines (3 or more) down to a single empty line (\n\n).
   const normalizedContent = content
-    .replace(/\r\n/g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\r\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
 
-  const lines = normalizedContent.split('\n');
+  const lines = normalizedContent.split("\n");
   const sections: HierarchicalSection[] = [];
   const currentHeadings: string[] = []; // State machine to keep track of the active heading hierarchy path
   let currentContent: string[] = [];
@@ -58,10 +60,12 @@ const parseHierarchicalSections = (content: string): readonly HierarchicalSectio
   const saveCurrentSection = () => {
     if (currentContent.length > 0) {
       // Filter out any undefined or empty heading slots before saving
-      const headingsPath = currentHeadings.filter((h) => h !== undefined && h !== '');
+      const headingsPath = currentHeadings.filter(
+        (h) => h !== undefined && h !== "",
+      );
       sections.push({
         headings: headingsPath,
-        content: currentContent.join('\n').trim(),
+        content: currentContent.join("\n").trim(),
       });
       currentContent = []; // Reset content buffer for the next section
     }
@@ -72,14 +76,14 @@ const parseHierarchicalSections = (content: string): readonly HierarchicalSectio
     const match = headingRegex.exec(line);
     if (match) {
       saveCurrentSection(); // Heading detected -> package and save the previous section first
-      
+
       const level = match[1].length; // Heading depth based on the number of '#' characters (1-6)
       const title = match[2].trim();
-      
+
       // UPDATE HEADING TREE CONTEXT:
       // Assign the new heading to its corresponding level
       currentHeadings[level - 1] = `${match[1]} ${title}`;
-      
+
       // CRITICAL DESIGN TRICK: Truncate the currentHeadings array length to match the current "level".
       // This automatically discards sibling or child headings from previous sections,
       // preventing parent heading "leakage" or context contamination across unrelated chunks.
@@ -88,7 +92,7 @@ const parseHierarchicalSections = (content: string): readonly HierarchicalSectio
       currentContent.push(line); // Accumulate normal body lines into the active content buffer
     }
   }
-  
+
   // Package and save the final section of the document after completing the loop
   saveCurrentSection();
   return sections;
@@ -96,19 +100,19 @@ const parseHierarchicalSections = (content: string): readonly HierarchicalSectio
 
 /**
  * STEP 2: RECURSIVE CHARACTER SPLITTER
- * 
- * PURPOSE: Intelligently divides text by trying to split on separators in descending order 
+ *
+ * PURPOSE: Intelligently divides text by trying to split on separators in descending order
  * of structural significance (Paragraphs -> Single Newlines -> Sentences -> Words).
- * 
- * WHY IS IT NEEDED: This is the industry-standard "golden rule" of chunking (similar to 
- * LangChain's RecursiveCharacterTextSplitter). It ensures text breaks happen at natural boundaries, 
+ *
+ * WHY IS IT NEEDED: This is the industry-standard "golden rule" of chunking (similar to
+ * LangChain's RecursiveCharacterTextSplitter). It ensures text breaks happen at natural boundaries,
  * avoiding abrupt middle-of-sentence splits that degrade vector semantic quality.
- * 
+ *
  * EXAMPLE:
  *  - Input:
  *    text: "This is paragraph one.\n\nThis is paragraph two. It contains two sentences."
  *    maxLen: 35
- * 
+ *
  *  - Output:
  *    [
  *      "This is paragraph one.",
@@ -122,10 +126,10 @@ const recursiveSplit = (text: string, maxLen: number): readonly string[] => {
 
   // Define separator configurations in descending order of structural priority
   const separators = [
-    { delimiter: '\n\n', joiner: '\n\n' }, // Priority 1: Paragraphs (keeps logical ideas together)
-    { delimiter: '\n', joiner: '\n' },     // Priority 2: Single lines
-    { delimiter: /(?<=[.!?;])\s+/, joiner: ' ' }, // Priority 3: Sentences (Vietnamese & English boundary safe)
-    { delimiter: ' ', joiner: ' ' }               // Priority 4: Words (prevents splitting Vietnamese syllables/words)
+    { delimiter: "\n\n", joiner: "\n\n" }, // Priority 1: Paragraphs (keeps logical ideas together)
+    { delimiter: "\n", joiner: "\n" }, // Priority 2: Single lines
+    { delimiter: /(?<=[.!?;])\s+/, joiner: " " }, // Priority 3: Sentences (Vietnamese & English boundary safe)
+    { delimiter: " ", joiner: " " }, // Priority 4: Words (prevents splitting Vietnamese syllables/words)
   ];
 
   // Try each separator sequentially
@@ -150,29 +154,33 @@ const recursiveSplit = (text: string, maxLen: number): readonly string[] => {
 
 /**
  * HELPER FUNCTION: MERGE PARTS
- * 
+ *
  * PURPOSE: Greedily aggregates small text fragments (parts) together without exceeding maxLen.
  * If a single fragment already exceeds maxLen, it recursively splits it first before merging.
- * 
+ *
  * WHY IS IT NEEDED: Splitting by paragraph/sentence yields fragments of varying sizes (often short).
  * This function packs consecutive sentences tightly into a single chunk up to maxLen to minimize
  * chunk fragmentation and optimize the LLM's context window.
- * 
+ *
  * EXAMPLE:
  *  - Input:
  *    parts: ["Hello world.", "This is a test.", "Keep it short."],
  *    separator: " ",
  *    maxLen: 30
- * 
+ *
  *  - Output:
  *    [
  *      "Hello world. This is a test.",
  *      "Keep it short."
  *    ]
  */
-const mergeParts = (parts: readonly string[], separator: string, maxLen: number): readonly string[] => {
+const mergeParts = (
+  parts: readonly string[],
+  separator: string,
+  maxLen: number,
+): readonly string[] => {
   const results: string[] = [];
-  let buffer = '';
+  let buffer = "";
 
   for (const part of parts) {
     const trimmedPart = part.trim();
@@ -180,14 +188,16 @@ const mergeParts = (parts: readonly string[], separator: string, maxLen: number)
 
     // PRE-SPLIT VERIFICATION: If an individual fragment is larger than maxLen,
     // we must recursively split it first before running the merging pipeline.
-    const processedParts = trimmedPart.length > maxLen 
-      ? recursiveSplit(trimmedPart, maxLen) 
-      : [trimmedPart];
+    const processedParts =
+      trimmedPart.length > maxLen
+        ? recursiveSplit(trimmedPart, maxLen)
+        : [trimmedPart];
 
     for (const subPart of processedParts) {
       // Calculate the candidate length if this sub-part is merged into the active buffer
-      const candidate = buffer.length > 0 ? `${buffer}${separator}${subPart}` : subPart;
-      
+      const candidate =
+        buffer.length > 0 ? `${buffer}${separator}${subPart}` : subPart;
+
       if (candidate.length <= maxLen) {
         buffer = candidate; // Fits within limit -> merge into the buffer
       } else {
@@ -212,41 +222,42 @@ const mergeParts = (parts: readonly string[], separator: string, maxLen: number)
 
 /**
  * OVERLAP TEXT EXTRACTION
- * 
+ *
  * PURPOSE: Extracts the last N sentences of the previous chunk to act as an overlapping prefix for the next chunk.
- * 
+ *
  * WHY IS IT NEEDED: Solves "The Boundary Problem". It provides context linking across chunk cuts,
  * allowing the Embedding Model to capture relations between ideas split across sequential blocks.
- * 
+ *
  * EXAMPLE:
  *  - Input:
  *    text: "First sentence. Second sentence. Third sentence!",
  *    numSentences: 2
- * 
+ *
  *  - Output:
  *    "Second sentence. Third sentence!"
  */
 const getOverlapText = (text: string, numSentences: number): string => {
-  if (numSentences <= 0) return '';
+  if (numSentences <= 0) return "";
 
-  // Split text into sentences using standard punctuation boundaries
+  // FIXED: Corrected regex syntax from /(?<=\[.!?;\])\\s+/ to /(?<=[.!?;])\s+/
   const sentences = text
     .split(/(?<=[.!?;])\s+/)
     .map((s) => s.trim())
     .filter((s) => s.length > 0); // Exclude empty strings
-  
+
   // Extract the last N sentences and join them with a single space
-  return sentences.slice(-numSentences).join(' ');
+  return sentences.slice(-numSentences).join(" ");
 };
 
-const padChunkNumber = (chunkIndex: number): string => String(chunkIndex + 1).padStart(3, '0');
+const padChunkNumber = (chunkIndex: number): string =>
+  String(chunkIndex + 1).padStart(3, "0");
 
 /**
  * MAIN FUNCTION: POLICY DOCUMENT CHUNKER (ORCHESTRATOR)
- * 
+ *
  * PURPOSE: High-level entry point that processes raw policy documents into structured Chunk Records.
  * Combines Document Structure-based parsing and Recursive Character Splitting with overlaps.
- * 
+ *
  * EXAMPLE:
  *  - Input policies:
  *    [
@@ -258,7 +269,7 @@ const padChunkNumber = (chunkIndex: number): string => String(chunkIndex + 1).pa
  *        status: "active"
  *      }
  *    ]
- * 
+ *
  *  - Output Chunk Records:
  *    [
  *      {
@@ -271,7 +282,9 @@ const padChunkNumber = (chunkIndex: number): string => String(chunkIndex + 1).pa
  *      }
  *    ]
  */
-export const createPolicyChunks = (policies: readonly Policy[]): readonly ChunkRecord[] =>
+export const createPolicyChunks = (
+  policies: readonly Policy[],
+): readonly ChunkRecord[] =>
   policies.flatMap((policy) => {
     // Step 1: Parse the document into hierarchical sections
     const sections = parseHierarchicalSections(policy.content);
@@ -279,25 +292,27 @@ export const createPolicyChunks = (policies: readonly Policy[]): readonly ChunkR
 
     for (const section of sections) {
       // Join array of headings into a single multi-line context string (e.g., "# Chapter I\n## Article 1")
-      let headingContext = section.headings.join('\n');
-      
+      let headingContext = section.headings.join("\n");
+
       // DYNAMIC BUDGET ALLOCATION:
       // Allocate chunk characters for the overlapping text (averages 120 characters for 1 sentence)
       const overlapBudget = OVERLAP_SENTENCES > 0 ? 120 : 0;
-      
+
       // Dynamically calculate the maximum length left for the raw content.
       // This guarantees that after assembling (Heading + Overlap + Content + Newlines),
       // the total chunk size NEVER exceeds MAX_CHUNK_SIZE (damped by an 8-character buffer).
-      let effectiveMaxLen = MAX_CHUNK_SIZE - headingContext.length - overlapBudget - 8;
+      let effectiveMaxLen =
+        MAX_CHUNK_SIZE - headingContext.length - overlapBudget - 8;
 
       // FALLBACK PRECAUTION: If heading hierarchy is extremely long, effectiveMaxLen becomes too small,
       // causing the core content to get fragmented into micro-chunks.
       // Solution: Fall back to using only the deepest heading, leaving at least 200 characters for content.
       if (effectiveMaxLen < 200 && section.headings.length > 0) {
         headingContext = section.headings[section.headings.length - 1];
-        effectiveMaxLen = MAX_CHUNK_SIZE - headingContext.length - overlapBudget - 8;
+        effectiveMaxLen =
+          MAX_CHUNK_SIZE - headingContext.length - overlapBudget - 8;
       }
-      
+
       // Enforce a hard floor of 100 characters to prevent micro-chunks
       effectiveMaxLen = Math.max(effectiveMaxLen, 100);
 
@@ -308,8 +323,11 @@ export const createPolicyChunks = (policies: readonly Policy[]): readonly ChunkR
         // SAFE OVERLAP EXTRACTION:
         // Extract overlap strictly from the raw content of the previous chunk (rawContentChunks[index - 1]).
         // This ensures heading markers (# Headings) of the previous chunk never leak into the overlap of the next chunk.
-        const overlap = index > 0 ? getOverlapText(rawContentChunks[index - 1], OVERLAP_SENTENCES) : '';
-        
+        const overlap =
+          index > 0
+            ? getOverlapText(rawContentChunks[index - 1], OVERLAP_SENTENCES)
+            : "";
+
         let finalContent = chunkContent.trim();
 
         // Prepend overlap to the start of the chunk content

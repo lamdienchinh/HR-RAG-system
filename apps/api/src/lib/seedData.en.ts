@@ -347,6 +347,91 @@ The old policy allowed unlimited remote work days with manager approval. There w
 
 The current policy has limited this to 3 days per week and requires special approval for working from abroad.`,
   },
+  {
+    id: 'working-hours-policy',
+    title: 'Working Hours and Attendance Policy',
+    category: 'attendance',
+    version: '2026.1',
+    status: 'current',
+    sensitivity: 'internal',
+    content: `# Working Hours and Attendance Policy
+
+The standard working hours of the company are 8 hours per day, from Monday to Friday. The standard working window is from 08:30 to 17:30, with a 1-hour lunch break from 12:00 to 13:00 (not included in the working hours).
+
+The company applies a Flexible Working Hours (Flexitime) mechanism. Employees can check-in between 08:00 and 09:30 and leave after completing exactly 8 hours of work at the office (e.g., checking in at 09:15 means checking out at 18:15).
+
+Employees must record their attendance using fingerprints or via the company's internal mobile application when arriving and leaving. In case of forgotten attendance, a justification request must be submitted for approval by the direct manager within 48 hours.
+
+Arriving late (after 09:30) more than 3 times in a calendar month without a valid, pre-approved reason by the manager will result in a written warning from the HR Department.`,
+  },
+  {
+    id: 'public-holidays-policy',
+    title: 'Public Holidays and Special Leave Policy',
+    category: 'time-off',
+    version: '2026.1',
+    status: 'current',
+    sensitivity: 'internal',
+    content: `# Public Holidays and Special Leave Policy
+
+The company applies the public holiday schedule with full pay in accordance with the Vietnam Labor Code, including: New Year's Day, Lunar New Year (Tet), Hung Kings Commemoration Day, Victory Day (April 30), International Workers' Day (May 1), and National Day (September 2).
+
+In addition to national holidays, the company provides the following special fully paid leave days:
+- **Employee's Birthday:** 1 day off in the birthday month (requires notifying the manager 5 working days in advance).
+- **Marriage:** 3 working days off for employee's marriage; 1 working day off for employee's child's marriage.
+- **Bereavement Leave:** 3 working days off for the death of parents, parents-in-law, spouse, or child. 1 working day off for the death of siblings.
+
+If a national public holiday falls on a weekend (Saturday or Sunday), employees will receive a compensatory day off on the next working day, following specific instructions from the HR Department for each holiday period.`,
+  },
+  {
+    id: 'lunch-and-benefits-policy',
+    title: 'Lunch Allowance and Office Benefits Policy',
+    category: 'benefits',
+    version: '2026.1',
+    status: 'current',
+    sensitivity: 'internal',
+    content: `# Lunch Allowance and Office Benefits Policy
+
+Regular employees are entitled to a monthly Lunch Allowance of 1,200,000 VND. This allowance is calculated proportionally based on the actual number of working days at the office (equivalent to 55,000 VND/day). The lunch allowance is not applicable for remote work (WFH) days or long-term leaves (more than 3 consecutive days off).
+
+The company supports motorbike parking fees at the office building's basement with a rate of 200,000 VND/month, or provides free car parking cards for Managerial-level employees (from level E5 and above).
+
+Every Friday afternoon at 16:00, the company organizes a "Happy Hour" program in the office Pantry area. All costs for light meals, milk tea, fruits, and soft drinks are fully sponsored by the company to encourage inter-departmental bonding.`,
+  },
+  {
+    id: 'wfh-allowance-policy',
+    title: 'Remote Work Equipment and Support Policy',
+    category: 'benefits',
+    version: '2026.1',
+    status: 'current',
+    sensitivity: 'internal',
+    content: `# Remote Work Equipment and Support Policy
+
+To ensure health and productivity when working remotely (WFH) or hybrid, the company provides a one-time subsidy for ergonomic equipment purchases for regular employees with a labor contract of 1 year or more.
+
+The maximum support is 2,500,000 VND to cover the following categories: Ergonomic Chairs, Height-Adjustable Desks, or Secondary Monitors. Employees make the purchase first, then submit the tax invoice (VAT) showing the company's info to the expense system within 30 days of purchase.
+
+Additionally, employees on a fixed Hybrid work schedule will receive a monthly Internet allowance of 300,000 VND, paid directly alongside the monthly salary payment.`,
+  },
+  {
+    id: 'dress-code-policy',
+    title: 'Dress Code and Office Etiquette Policy',
+    category: 'culture',
+    version: '2026.1',
+    status: 'current',
+    sensitivity: 'internal',
+    content: `# Dress Code and Office Etiquette Policy
+
+The company builds an open, creative, yet respectful and professional working environment.
+
+**Dress Code Regulations:**
+- **Daily Wear (Casual):** Employees are free to choose comfortable, youthful clothing suitable for a technology environment (t-shirts, polo shirts, jeans, khakis, sneakers, flats, respectful sandals).
+- **Inappropriate Attire:** Wearing short athletic shorts, tank tops, halter tops, or slippers in the working area is strictly prohibited.
+- **When meeting clients/partners or on major events:** Business Casual attire (button-down shirts, slacks, office skirts) is required.
+
+**Office Etiquette:**
+- **Noise Control:** To ensure focus for nearby colleagues, do not talk or debate too loudly in the common working space. Employees must use headphones when listening to music, watching videos, or participating in online meetings at their desks.
+- **Office Pantry:** Maintain cleanliness in the Pantry area. Clean up food and drinks immediately after use. Food stored in the shared refrigerator for more than 3 days will be cleaned out by HR every Friday afternoon.`,
+  },
 ];
 
 export const questionsEn: readonly QuestionSpec[] = [

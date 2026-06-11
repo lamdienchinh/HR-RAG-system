@@ -47,7 +47,9 @@ export const ChatBubble = ({
             }`}
           >
             {isAssistant ? (
-              <div className={`chat-markdown${showStreaming ? " streaming" : ""}`}>
+              <div
+                className={`chat-markdown${showStreaming ? " streaming" : ""}`}
+              >
                 {message.content.length > 0 ? (
                   <Markdown>{message.content}</Markdown>
                 ) : (
@@ -59,29 +61,71 @@ export const ChatBubble = ({
             )}
           </div>
         )}
-        {isAssistant && usedCitations.length > 0 && (
-          <div className="mt-2 rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2">
-            <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-              Nguồn tham khảo
-            </div>
-            <div className="flex gap-2 flex-wrap">
-              {usedCitations.map(({ n, ref }) => (
-                <a
-                  key={`${ref.policyId}-${n}`}
-                  className="citation-source-link"
-                  href={`/policies/view/${encodeURIComponent(ref.policyId)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title={`${ref.title} (v${ref.version})`}
-                >
-                  <span className="citation-badge">[S{n}]</span>
-                  <span className="truncate font-medium">{ref.title}</span>
-                  <span className="text-slate-400">v{ref.version}</span>
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
+        {isAssistant &&
+          usedCitations.length > 0 &&
+          (() => {
+            interface GroupedCitation {
+              readonly policyId: string;
+              readonly title: string;
+              readonly version: string;
+              readonly nums: number[];
+            }
+
+            const groupedCitations: GroupedCitation[] = [];
+            for (const item of usedCitations) {
+              const existing = groupedCitations.find(
+                (g) => g.policyId === item.ref.policyId,
+              );
+              if (existing) {
+                if (!existing.nums.includes(item.n)) {
+                  (existing.nums as number[]).push(item.n);
+                }
+              } else {
+                groupedCitations.push({
+                  policyId: item.ref.policyId,
+                  title: item.ref.title,
+                  version: item.ref.version,
+                  nums: [item.n],
+                });
+              }
+            }
+
+            // Sort citation numbers for consistent ordering
+            for (const g of groupedCitations) {
+              (g.nums as number[]).sort((a, b) => a - b);
+            }
+
+            return (
+              <div className="mt-2 rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2">
+                <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                  Nguồn tham khảo
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  {groupedCitations.map((group) => {
+                    const badgeLabel = `[${group.nums.map((n) => `S${n}`).join(", ")}]`;
+                    return (
+                      <a
+                        key={group.policyId}
+                        className="citation-source-link"
+                        href={`/policies/view/${encodeURIComponent(group.policyId)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={`${group.title} (v${group.version})`}
+                      >
+                        <span className="citation-badge text-nowrap">
+                          {badgeLabel}
+                        </span>
+                        <span className="truncate font-medium">
+                          {group.title}
+                        </span>
+                        <span className="text-slate-400">v{group.version}</span>
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
       </div>
     </article>
   );

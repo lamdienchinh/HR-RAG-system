@@ -37,16 +37,54 @@ interface HierarchicalSection {
  *      }
  *    ]
  */
+/**
+ * Helper function to clean, normalize and sanitize raw document content.
+ * - Converts Windows-style newlines (\r\n) to Unix (\n).
+ * - Strips non-printable / control characters.
+ * - Trims each line and collapses internal multiple spaces/tabs to a single space.
+ * - Filters out decorative lines (markdown dividers like ---, ***, ___).
+ * - Collapses consecutive empty lines (3 or more) to a single empty line (\n\n).
+ */
+export const cleanDocumentText = (content: string): string => {
+  if (!content) return "";
+
+  // 1. Convert \r\n to \n and remove hidden control characters (except tab and newline)
+  const cleaned = content
+    .replace(/\r\n/g, "\n")
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "");
+
+  // 2. Process line-by-line: trim, collapse internal spacing, remove dividers
+  const lines = cleaned.split("\n");
+  const processedLines: string[] = [];
+
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+
+    // Skip decorative markdown divider lines (e.g., ---, ***, ___ or with spaces)
+    const isDivider = /^[ \t]*[-*_ \t]{3,}[ \t]*$/.test(trimmedLine) &&
+                      (trimmedLine.includes("-") || trimmedLine.includes("*") || trimmedLine.includes("_"));
+    
+    if (isDivider) {
+      continue;
+    }
+
+    // Collapse multiple consecutive spaces/tabs within a single line
+    const normalizedLine = trimmedLine.replace(/[ \t]+/g, " ");
+    processedLines.push(normalizedLine);
+  }
+
+  // 3. Rejoin and collapse 3 or more consecutive newlines down to 2 (\n\n)
+  return processedLines
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+};
+
 const parseHierarchicalSections = (
   content: string,
 ): readonly HierarchicalSection[] => {
-  // 1. TEXT SANITIZATION & NORMALIZATION:
-  // - Convert Windows-style newlines (\r\n) to Unix-standard (\n) for consistent processing.
-  // - Collapse multiple consecutive empty lines (3 or more) down to a single empty line (\n\n).
-  const normalizedContent = content
-    .replace(/\r\n/g, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+  // 1. ADVANCED TEXT SANITIZATION & NORMALIZATION:
+  const normalizedContent = cleanDocumentText(content);
 
   const lines = normalizedContent.split("\n");
   const sections: HierarchicalSection[] = [];

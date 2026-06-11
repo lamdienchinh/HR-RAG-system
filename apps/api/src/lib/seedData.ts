@@ -6,18 +6,28 @@ export type Locale = "vi" | "en";
 const policiesVi: readonly SeedPolicy[] = [
   {
     id: "time-off-policy",
-    title: "Chính Sách Nghỉ Phép",
+    title: "Chính Sách và Quy Trình Nghỉ Phép",
     category: "time-off",
     version: "2026.1",
     status: "current",
     sensitivity: "internal",
-    content: `# Chính Sách Nghỉ Phép
+    content: `# Chính Sách và Quy Trình Nghỉ Phép
 
 Nhân viên chính thức được hưởng 18 ngày phép năm có lương mỗi năm dương lịch. Nhân viên thử việc được hưởng số ngày phép tỷ lệ theo số tháng còn lại trong năm.
 
 Nhân viên có thể chuyển tối đa 5 ngày phép chưa sử dụng sang năm tiếp theo. Số ngày phép chuyển sẽ hết hạn vào ngày 31 tháng 3 trừ khi Phòng Nhân sự cấp ngoại lệ vì lý do công việc trọng yếu.
 
-Yêu cầu nghỉ phép từ 3 ngày làm việc liên tiếp trở xuống cần được quản lý phê duyệt trước ít nhất 3 ngày làm việc. Yêu cầu nghỉ phép trên 3 ngày làm việc liên tiếp cần báo trước 10 ngày làm việc.
+Tất cả các yêu cầu nghỉ phép (phép năm, nghỉ không lương, nghỉ đặc biệt) phải được nộp dưới dạng điện tử thông qua Cổng thông tin nhân sự (HR Portal).
+
+**Thời gian báo trước yêu cầu nghỉ phép:**
+- Nghỉ phép từ 3 ngày làm việc liên tiếp trở xuống cần được quản lý phê duyệt trước ít nhất 3 ngày làm việc.
+- Yêu cầu nghỉ phép trên 3 ngày làm việc liên tiếp cần báo trước ít nhất 10 ngày làm việc.
+
+**Trường hợp nghỉ phép khẩn cấp:**
+Trong trường hợp bị ốm đột xuất hoặc có việc khẩn cấp, nhân viên phải thông báo cho quản lý trực tiếp qua Slack hoặc gọi điện thoại trước 09:00 sáng của ngày nghỉ. Đơn xin nghỉ phép chính thức phải được nộp trên HR Portal trong vòng 24 giờ sau khi quay lại làm việc.
+
+**Phê duyệt:**
+Yêu cầu nghỉ phép chỉ có hiệu lực sau khi nhận được sự phê duyệt điện tử từ quản lý trực tiếp. Nhân viên không nên đặt vé xe, vé máy bay hoặc lên kế hoạch trước khi kỳ nghỉ phép được phê duyệt chính thức.
 
 Nghỉ phép không lương có thể được xem xét theo từng trường hợp, yêu cầu phê duyệt từ quản lý trực tiếp và HRBP. Thời gian nghỉ phép không lương không được vượt quá 30 ngày dương lịch trong một năm.`,
   },
@@ -53,16 +63,22 @@ Nghỉ thai sản cung cấp 16 tuần có lương cho người chăm sóc chín
   },
   {
     id: "remote-work-policy",
-    title: "Chính Sách Làm Việc Từ Xa",
+    title: "Chính Sách Làm Việc Từ Xa và Phúc Lợi Hybrid",
     category: "remote-work",
     version: "2026.1",
     status: "current",
     sensitivity: "internal",
-    content: `# Chính Sách Làm Việc Từ Xa
+    content: `# Chính Sách Làm Việc Từ Xa và Phúc Lợi Hybrid
 
 Nhân viên có thể làm việc từ xa tối đa 3 ngày mỗi tuần với sự phê duyệt của quản lý.
 
-Làm việc từ xa ở nước ngoài yêu cầu phê duyệt từ quản lý, HRBP và Phòng Pháp chế trước ít nhất 15 ngày làm việc trước khi đi. Phê duyệt phụ thuộc vào các ràng buộc về bảng lương, thuế, kiểm soát xuất khẩu và xử lý dữ liệu khách hàng.`,
+Làm việc từ xa ở nước ngoài yêu cầu phê duyệt từ quản lý, HRBP và Phòng Pháp chế trước ít nhất 15 ngày làm việc trước khi đi. Phê duyệt phụ thuộc vào các ràng buộc về bảng lương, thuế, kiểm soát xuất khẩu và xử lý dữ liệu khách hàng.
+
+Để đảm bảo sức khỏe và hiệu suất làm việc khi áp dụng cơ chế làm việc từ xa (WFH) hoặc Hybrid, công ty hỗ trợ một lần chi phí mua sắm thiết bị công thái học cho nhân viên chính thức ký hợp đồng lao động từ 1 năm trở lên.
+
+Mức hỗ trợ tối đa là 2.500.000 VNĐ dùng để chi trả cho các danh mục: Ghế công thái học, Bàn làm việc điều chỉnh độ cao, hoặc Màn hình phụ. Nhân viên mua hàng trước, sau đó nộp hóa đơn đỏ (VAT) ghi thông tin công ty lên hệ thống thanh toán chi phí trong vòng 30 ngày kể từ ngày mua.
+
+Ngoài ra, nhân viên tham gia lịch làm việc Hybrid cố định sẽ được nhận khoản phụ cấp hỗ trợ cước Internet cố định trị giá 300.000 VNĐ/tháng, được chi trả trực tiếp cùng kỳ lương hàng tháng.`,
   },
   {
     id: "expense-policy",
@@ -229,7 +245,7 @@ Mọi nhân viên phải hoàn thành đào tạo an toàn khi onboard và cập
 
 Phòng làm việc phải tuân thủ tiêu chuẩn PCCC. Lối thoát hiểm không được bị chặn. Thiết bị cứu hỏa phải được kiểm tra hàng tháng. Nhân viên không được tự ý sửa chữa thiết bị điện trong văn phòng.
 
-Làm việc tại nhà cũng phải tuân thủ các tiêu chuẩn an toàn cơ bản: bàn ghế ergonomic, ánh sáng đầy đủ, và ổ cắm điện an toàn. Công ty hỗ trợ 2.000.000 VNĐ mỗi năm cho nhân viên làm việc từ xa để mua thiết bị ergonomic.
+Làm việc tại nhà cũng phải tuân thủ các tiêu chuẩn an toàn cơ bản: bàn ghế ergonomic, ánh sáng đầy đủ, và ổ cắm điện an toàn. Nhân viên có thể tham khảo Chính Sách Làm Việc Từ Xa và Phúc Lợi Hybrid để được nhận khoản hỗ trợ mua sắm thiết bị công thái học.
 
 Sự cố an toàn phải được ghi nhận trong hệ thống báo cáo sự cố trong vòng 24 giờ. Báo cáo phải bao gồm: mô tả sự cố, nguyên nhân, người liên quan, và biện pháp phòng ngừa.`,
   },
@@ -286,12 +302,12 @@ Phát hiện sự cố bảo mật phải được báo cáo ngay lập tức qu
   },
   {
     id: "health-insurance-policy",
-    title: "Chính Sách Bảo Hiểm và Phúc Lợi",
+    title: "Chính Sách Bảo Hiểm và Phúc Lợi Nhân Viên",
     category: "benefits",
     version: "2026.1",
     status: "current",
     sensitivity: "internal",
-    content: `# Chính Sách Bảo Hiểm và Phúc Lợi
+    content: `# Chính Sách Bảo Hiểm và Phúc Lợi Nhân Viên
 
 Nhân viên chính thức được hưởng bảo hiểm sức khỏe nhóm bao gồm: khám bệnh, nhập viện, nha khoa và nhãn khoa. Bảo hiểm có hiệu lực từ ngày đầu tiên làm việc. Người phụ thuộc (vợ/chồng, con dưới 18 tuổi) có thể được đăng ký thêm với chi phí công ty hỗ trợ 50%.
 
@@ -299,7 +315,16 @@ Ngân sách phúc lợi hàng năm: 5.000.000 VNĐ cho nhân viên, 8.000.000 VN
 
 Khám sức khỏe định kỳ được tổ chức hàng năm tại bệnh viện đối tác. Kết quả khám được bảo mật và chỉ nhân viên được thông báo. Công ty không truy cập kết quả khám sức khỏe của nhân viên.
 
-Nhân viên nghỉ việc vẫn được hưởng bảo hiểm đến cuối tháng nghỉ việc. COBRA không áp dụng tại Việt Nam, nhưng nhân viên có thể chuyển sang bảo hiểm cá nhân theo quy định của nhà bảo hiểm.`,
+Nhân viên nghỉ việc vẫn được hưởng bảo hiểm đến cuối tháng nghỉ việc. COBRA không áp dụng tại Việt Nam, nhưng nhân viên có thể chuyển sang bảo hiểm cá nhân theo quy định của nhà bảo hiểm.
+
+**Phụ cấp ăn trưa:**
+Nhân viên chính thức của công ty được hưởng khoản Phụ cấp ăn trưa trị giá 1.200.000 VNĐ mỗi tháng. Phụ cấp này được tính tỷ lệ theo số ngày công làm việc thực tế tại văn phòng (mức tương đương 55.000 VNĐ/ngày). Phụ cấp ăn trưa không được áp dụng cho những ngày làm việc từ xa (WFH) hoặc những ngày nghỉ phép dài ngày (trên 3 ngày liên tiếp).
+
+**Hỗ trợ gửi xe:**
+Công ty hỗ trợ chi phí gửi xe máy tại hầm tòa nhà văn phòng với mức 200.000 VNĐ/tháng, hoặc cấp thẻ gửi xe ô tô miễn phí cho các nhân sự cấp Quản lý (từ cấp bậc E5 trở lên).
+
+**Happy Hour:**
+Vào lúc 16:00 chiều Thứ Sáu hàng tuần, công ty tổ chức chương trình "Happy Hour" tại khu vực Pantry văn phòng. Toàn bộ chi phí đồ ăn nhẹ, trà sữa, hoa quả và đồ uống nhẹ sẽ do công ty tài trợ nhằm khuyến khích sự gắn kết giữa các phòng ban.`,
   },
   {
     id: "promotion-policy",
@@ -384,36 +409,6 @@ Ngoài các ngày lễ quốc gia, công ty cung cấp các ngày nghỉ đặc 
 - **Nghỉ hiếu:** Bố mẹ đẻ, bố mẹ vợ/chồng, vợ hoặc chồng, con mất được nghỉ 3 ngày làm việc. Anh, chị, em ruột mất được nghỉ 1 ngày làm việc.
 
 If a national public holiday falls on a weekend (Saturday or Sunday), employees will receive a compensatory day off on the next working day, following specific instructions from the HR Department for each holiday period.`,
-  },
-  {
-    id: "lunch-and-benefits-policy",
-    title: "Chính Sách Phụ Cấp Ăn Trưa và Phúc Lợi Văn Phòng",
-    category: "benefits",
-    version: "2026.1",
-    status: "current",
-    sensitivity: "internal",
-    content: `# Chính Sách Phụ Cấp Ăn Trưa và Phúc Lợi Văn Phòng
-
-Nhân viên chính thức của công ty được hưởng khoản Phụ cấp ăn trưa trị giá 1.200.000 VNĐ mỗi tháng. Phụ cấp này được tính tỷ lệ theo số ngày công làm việc thực tế tại văn phòng (mức tương đương 55.000 VNĐ/ngày). Phụ cấp ăn trưa không được áp dụng cho những ngày làm việc từ xa (WFH) hoặc những ngày nghỉ phép dài ngày (trên 3 ngày liên tiếp).
-
-Công ty hỗ trợ chi phí gửi xe máy tại hầm tòa nhà văn phòng với mức 200.000 VNĐ/tháng, hoặc cấp thẻ gửi xe ô tô miễn phí cho các nhân sự cấp Quản lý (từ cấp bậc E5 trở lên).
-
-Vào lúc 16:00 chiều Thứ Sáu hàng tuần, công ty tổ chức chương trình "Happy Hour" tại khu vực Pantry văn phòng. Toàn bộ chi phí đồ ăn nhẹ, trà sữa, hoa quả và đồ uống nhẹ sẽ do công ty tài trợ nhằm khuyến khích sự gắn kết giữa các phòng ban.`,
-  },
-  {
-    id: "wfh-allowance-policy",
-    title: "Chính Sách Hỗ Trợ Thiết Bị Làm Việc Từ Xa",
-    category: "benefits",
-    version: "2026.1",
-    status: "current",
-    sensitivity: "internal",
-    content: `# Chính Sách Hỗ Trợ Thiết Bị Làm Việc Từ Xa
-
-Để đảm bảo sức khỏe và hiệu suất làm việc khi áp dụng cơ chế làm việc từ xa (WFH) hoặc Hybrid, công ty hỗ trợ một lần chi phí mua sắm thiết bị công thái học cho nhân viên chính thức ký hợp đồng lao động từ 1 năm trở lên.
-
-Mức hỗ trợ tối đa là 2.500.000 VNĐ dùng để chi trả cho các danh mục: Ghế công thái học, Bàn làm việc điều chỉnh độ cao, hoặc Màn hình phụ. Nhân viên mua hàng trước, sau đó nộp hóa đơn đỏ (VAT) ghi thông tin công ty lên hệ thống thanh toán chi phí trong vòng 30 ngày kể từ ngày mua.
-
-Ngoài ra, nhân viên tham gia lịch làm việc Hybrid cố định sẽ được nhận khoản phụ cấp hỗ trợ cước Internet cố định trị giá 300.000 VNĐ/tháng, được chi trả trực tiếp cùng kỳ lương hàng tháng.`,
   },
   {
     id: "dress-code-policy",

@@ -3,20 +3,30 @@ import type { QuestionSpec, SeedPolicy } from './types.js';
 export const policiesEn: readonly SeedPolicy[] = [
   {
     id: 'time-off-policy',
-    title: 'Time Off Policy',
+    title: 'Leave Policy and Procedure',
     category: 'time-off',
     version: '2026.1',
     status: 'current',
     sensitivity: 'internal',
-    content: `# Time Off Policy
+    content: `# Leave Policy and Procedure
 
-Full-time employees receive 18 paid annual leave days per calendar year. Probationary employees receive pro-rated leave based on remaining months in the year.
+Regular employees are entitled to 18 paid annual leave days per calendar year. Probationary employees are entitled to a pro-rated number of leave days based on the remaining months of the year.
 
-Employees may carry over up to 5 unused annual leave days into the next calendar year. Carryover days expire on March 31 unless HR grants an exception for business-critical coverage.
+Employees can carry over a maximum of 5 unused annual leave days to the following year. Carried-over leave days will expire on March 31 unless the HR Department grants an exception for business-critical reasons.
 
-Leave requests of 3 consecutive business days or fewer require manager approval at least 3 business days before the first day off. Leave requests longer than 3 consecutive business days require 10 business days of notice.
+All leave requests (annual leave, unpaid leave, and special leave) must be submitted electronically through the internal HR Portal.
 
-Unpaid leave may be considered on a case-by-case basis, requiring approval from the direct manager and HRBP. Unpaid leave must not exceed 30 calendar days in a single year.`,
+**Submission Guidelines:**
+- For planned leave of 1 to 3 days: Submit at least 3 working days in advance.
+- For planned leave of more than 3 days: Submit at least 10 working days in advance.
+
+**Emergency Leave:**
+In case of unexpected illness or emergency, employees must notify their direct manager via Slack or phone call before 09:00 AM on the day of absence. The official leave request must be submitted on the HR Portal within 24 hours of returning to work.
+
+**Approval:**
+Leave requests are only valid after receiving electronic approval from the direct manager. Employees are advised not to book travel or make plans before their leave is approved.
+
+Unpaid leave may be considered on a case-by-case basis, requiring approval from the direct manager and HRBP. Unpaid leave must not exceed 30 calendar days per year.`,
   },
   {
     id: 'overtime-policy',
@@ -50,16 +60,22 @@ Parental leave provides 16 paid weeks for primary caregivers and 4 paid weeks fo
   },
   {
     id: 'remote-work-policy',
-    title: 'Remote Work Policy',
+    title: 'Remote and Hybrid Work Policy',
     category: 'remote-work',
     version: '2026.1',
     status: 'current',
     sensitivity: 'internal',
-    content: `# Remote Work Policy
+    content: `# Remote and Hybrid Work Policy
 
 Employees may work remotely up to 3 days per week with manager approval.
 
-Remote work from another country requires approval from the manager, HRBP, and Legal at least 15 business days before travel. Approval depends on payroll, tax, export control, and customer data handling constraints.`,
+Remote work from another country requires approval from the manager, HRBP, and Legal at least 15 business days before travel. Approval depends on payroll, tax, export control, and customer data handling constraints.
+
+To ensure health and productivity when working remotely (WFH) or hybrid, the company provides a one-time subsidy for ergonomic equipment purchases for regular employees with a labor contract of 1 year or more.
+
+The maximum support is 2,500,000 VND to cover the following categories: Ergonomic Chairs, Height-Adjustable Desks, or Secondary Monitors. Employees make the purchase first, then submit the tax invoice (VAT) showing the company's info to the expense system within 30 days of purchase.
+
+Additionally, employees on a fixed Hybrid work schedule will receive a monthly Internet allowance of 300,000 VND, paid directly alongside the monthly salary payment.`,
   },
   {
     id: 'expense-policy',
@@ -222,13 +238,13 @@ Personal data must be deleted or anonymized when no longer necessary for the pur
     sensitivity: 'internal',
     content: `# Workplace Safety Policy
 
-All employees must complete safety training during onboarding and refresh it annually. Workplace accidents must be reported to the manager and safety team within 1 hour.
+  All employees must complete safety training during onboarding and refresh it annually. Workplace accidents must be reported to the manager and safety team within 1 hour.
 
-Office spaces must comply with fire safety standards. Emergency exits must not be blocked. Fire equipment must be inspected monthly. Employees may not repair electrical equipment in the office themselves.
+  Office spaces must comply with fire safety standards. Emergency exits must not be blocked. Fire equipment must be inspected monthly. Employees may not repair electrical equipment in the office themselves.
 
-Remote work must also meet basic safety standards: ergonomic desk and chair, adequate lighting, and safe electrical outlets. The company provides 2,000,000 VND per year for remote workers to purchase ergonomic equipment.
+  Remote work must also meet basic safety standards: ergonomic desk and chair, adequate lighting, and safe electrical outlets. Employees may refer to the Remote and Hybrid Work Policy to claim the ergonomic equipment subsidy.
 
-Safety incidents must be recorded in the incident reporting system within 24 hours. Reports must include: incident description, cause, individuals involved, and preventive measures.`,
+  Safety incidents must be recorded in the incident reporting system within 24 hours. Reports must include: incident description, cause, individuals involved, and preventive measures.`,
   },
   {
     id: 'referral-bonus-policy',
@@ -283,12 +299,12 @@ Security incidents must be reported immediately via the #security-incident Slack
   },
   {
     id: 'health-insurance-policy',
-    title: 'Insurance and Benefits Policy',
+    title: 'Employee Benefits and Insurance Policy',
     category: 'benefits',
     version: '2026.1',
     status: 'current',
     sensitivity: 'internal',
-    content: `# Insurance and Benefits Policy
+    content: `# Employee Benefits and Insurance Policy
 
 Full-time employees receive group health insurance covering: outpatient care, hospitalization, dental, and vision. Insurance is effective from the first day of employment. Dependents (spouse, children under 18) can be enrolled with the company covering 50% of the additional cost.
 
@@ -296,7 +312,16 @@ Annual wellness budget: 5,000,000 VND for employees, 8,000,000 VND for employees
 
 Annual health checkups are organized at partner hospitals. Results are confidential and shared only with the employee. The company does not access employee health checkup results.
 
-Employees who leave the company remain insured until the end of their departure month. COBRA does not apply in Vietnam, but employees may switch to individual insurance per the insurer's regulations.`,
+Employees who leave the company remain insured until the end of their departure month. COBRA does not apply in Vietnam, but employees may switch to individual insurance per the insurer's regulations.
+
+**Lunch Allowance:**
+Regular employees are entitled to a monthly Lunch Allowance of 1,200,000 VND. This allowance is calculated proportionally based on the actual number of working days at the office (equivalent to 55,000 VND/day). The lunch allowance is not applicable for remote work (WFH) days or long-term leaves (more than 3 consecutive days off).
+
+**Parking Support:**
+The company supports motorbike parking fees at the office building's basement with a rate of 200,000 VND/month, or provides free car parking cards for Managerial-level employees (from level E5 and above).
+
+**Happy Hour:**
+Every Friday afternoon at 16:00, the company organizes a "Happy Hour" program in the office Pantry area. All costs for light meals, milk tea, fruits, and soft drinks are fully sponsored by the company to encourage inter-departmental bonding.`,
   },
   {
     id: 'promotion-policy',
@@ -381,36 +406,6 @@ In addition to national holidays, the company provides the following special ful
 - **Bereavement Leave:** 3 working days off for the death of parents, parents-in-law, spouse, or child. 1 working day off for the death of siblings.
 
 If a national public holiday falls on a weekend (Saturday or Sunday), employees will receive a compensatory day off on the next working day, following specific instructions from the HR Department for each holiday period.`,
-  },
-  {
-    id: 'lunch-and-benefits-policy',
-    title: 'Lunch Allowance and Office Benefits Policy',
-    category: 'benefits',
-    version: '2026.1',
-    status: 'current',
-    sensitivity: 'internal',
-    content: `# Lunch Allowance and Office Benefits Policy
-
-Regular employees are entitled to a monthly Lunch Allowance of 1,200,000 VND. This allowance is calculated proportionally based on the actual number of working days at the office (equivalent to 55,000 VND/day). The lunch allowance is not applicable for remote work (WFH) days or long-term leaves (more than 3 consecutive days off).
-
-The company supports motorbike parking fees at the office building's basement with a rate of 200,000 VND/month, or provides free car parking cards for Managerial-level employees (from level E5 and above).
-
-Every Friday afternoon at 16:00, the company organizes a "Happy Hour" program in the office Pantry area. All costs for light meals, milk tea, fruits, and soft drinks are fully sponsored by the company to encourage inter-departmental bonding.`,
-  },
-  {
-    id: 'wfh-allowance-policy',
-    title: 'Remote Work Equipment and Support Policy',
-    category: 'benefits',
-    version: '2026.1',
-    status: 'current',
-    sensitivity: 'internal',
-    content: `# Remote Work Equipment and Support Policy
-
-To ensure health and productivity when working remotely (WFH) or hybrid, the company provides a one-time subsidy for ergonomic equipment purchases for regular employees with a labor contract of 1 year or more.
-
-The maximum support is 2,500,000 VND to cover the following categories: Ergonomic Chairs, Height-Adjustable Desks, or Secondary Monitors. Employees make the purchase first, then submit the tax invoice (VAT) showing the company's info to the expense system within 30 days of purchase.
-
-Additionally, employees on a fixed Hybrid work schedule will receive a monthly Internet allowance of 300,000 VND, paid directly alongside the monthly salary payment.`,
   },
   {
     id: 'dress-code-policy',

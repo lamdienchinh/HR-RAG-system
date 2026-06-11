@@ -50,7 +50,7 @@ export const getModels = async (_request: Request, response: Response) => {
       .map((m) => m.name.replace("models/", ""))
       .filter(
         (m) =>
-          m.startsWith("gemini-") &&
+          (m.startsWith("gemini-") || m.startsWith("gemma-")) &&
           !/(embedding|imagen|image|tts|robotics|live)/i.test(m)
       )
       .sort((a, b) => {
@@ -58,7 +58,8 @@ export const getModels = async (_request: Request, response: Response) => {
           let s = 0;
           if (m.includes("flash")) s += 100;
           else if (m.includes("pro")) s += 50;
-          const v = m.match(/gemini-(\d+(?:\.\d+)?)/);
+          else if (m.startsWith("gemma-")) s += 80; // Trọng số cơ sở tốt cho các mô hình Gemma
+          const v = m.match(/(?:gemini|gemma)-(\d+(?:\.\d+)?)/);
           if (v) s += parseFloat(v[1]) * 10;
           if (m.includes("lite")) s -= 20;
           if (m.includes("preview")) s -= 5;

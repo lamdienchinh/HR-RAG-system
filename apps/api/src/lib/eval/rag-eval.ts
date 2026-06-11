@@ -503,9 +503,12 @@ export const evaluateRetrieval = (
   retrievalResult: EvalRetrievalResult,
   topK: number,
 ): RetrievalEvalResult => {
-  const retrievedPolicyIds = retrievalResult.chunks
+  // Deduplicate retrieved policy IDs to avoid multiple chunks from the same policy
+  // distorting the retrieval metrics (like NDCG > 1 or inflated Precision).
+  const rawRetrievedPolicyIds = retrievalResult.chunks
     .slice(0, topK)
     .map((c) => c.policyId);
+  const retrievedPolicyIds = Array.from(new Set(rawRetrievedPolicyIds));
 
   return {
     questionId: question.id,

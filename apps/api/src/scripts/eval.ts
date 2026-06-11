@@ -19,6 +19,8 @@ import {
 } from "../lib/eval/rag-eval.js";
 import { reindexPolicies, retrieveChunks } from "../lib/reindex.js";
 
+const EVAL_MODEL = process.env.EVAL_MODEL || "gemma-4-26b-a4b-it";
+
 // ── Terminal Colors ───────────────────────────────────────────────
 
 const c = {
@@ -240,6 +242,7 @@ const main = async (): Promise<void> => {
           minScore: 0.05,
           allowExternalSearch: false,
           topK,
+          geminiModel: EVAL_MODEL,
         });
         const genResult = evaluateGeneration(q, {
           answer: answerResult.answer,

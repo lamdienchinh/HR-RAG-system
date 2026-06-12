@@ -1,7 +1,6 @@
 import type { QuestionSpec, SeedPolicy } from "./types.js";
-import { policiesEn, questionsEn } from "./seedData.en.js";
 
-export type Locale = "vi" | "en";
+export type Locale = "vi";
 
 const policiesVi: readonly SeedPolicy[] = [
   {
@@ -631,11 +630,11 @@ const questionsVi: readonly QuestionSpec[] = [
   },
 ];
 
-export const getSeedPolicies = (locale: Locale): readonly SeedPolicy[] =>
-  locale === "vi" ? policiesVi : policiesEn;
+export const getSeedPolicies = (locale: Locale = "vi"): readonly SeedPolicy[] =>
+  policiesVi;
 
-export const getPresetQuestions = (locale: Locale): readonly QuestionSpec[] =>
-  locale === "vi" ? questionsVi : questionsEn;
+export const getPresetQuestions = (locale: Locale = "vi"): readonly QuestionSpec[] =>
+  questionsVi;
 
 // Default exports for backward compatibility
 export const seedPolicies = policiesVi;

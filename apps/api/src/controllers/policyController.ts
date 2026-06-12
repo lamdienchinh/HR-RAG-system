@@ -23,7 +23,7 @@ import {
 } from "../helpers/apiHelpers.js";
 
 export const getQuestions = (request: Request, response: Response) => {
-  const locale = (request.query.locale as Locale) || "vi";
+  const locale: Locale = "vi";
   response.json({ questions: getPresetQuestions(locale) });
 };
 
@@ -179,8 +179,7 @@ export const reindexAllPolicies = async (
 
 export const reseedPolicies = async (request: Request, response: Response) => {
   try {
-    const locale =
-      ((request.body as { locale?: string })?.locale as Locale) || "vi";
+    const locale: Locale = "vi";
     await seedPolicyRows(getSeedPolicies(locale));
     const result = await reindexPolicies();
     response.json({ ...result, locale });

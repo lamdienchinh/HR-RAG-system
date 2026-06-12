@@ -6,7 +6,7 @@ import { reindexPolicies } from '../lib/reindex.js';
 import { seedUsers } from '../lib/auth.js';
 
 const main = async (): Promise<void> => {
-  const locale = (process.argv[2] as Locale) || 'vi';
+  const locale: Locale = 'vi';
   await runMigrations();
   await seedUsers();
   console.log('Seeded default users (admin/admin123, employee/employee123)');

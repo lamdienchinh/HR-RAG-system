@@ -101,7 +101,7 @@ export const Sidebar = ({
     <>
       <aside className="hidden w-[280px] shrink-0 flex-col gap-1 overflow-y-auto border-l border-slate-200/60 bg-white/80 backdrop-blur p-3 xl:flex">
         {/* Agent Trace summary */}
-        {agentMode && (
+        {(agentSteps.length > 0 || agentRunning) && (
           <SummaryRow
             icon={<GitBranch className="size-4" />}
             iconColor="bg-violet-100 text-violet-600"

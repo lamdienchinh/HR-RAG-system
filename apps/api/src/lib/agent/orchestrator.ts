@@ -1,7 +1,8 @@
 import { answerQuestion, answerQuestionStream, type AnswerOptions, type AnswerStreamOptions } from "../answer.js";
 import type { RetrievedChunk } from "../types.js";
-import { analyzeQuery, type QueryAnalysis } from "./query-analyzer.js";
-import { executeRetrieval } from "./retrieval-engine.js";
+import { runGeminiAgenticStep, type AgenticStepMessage } from "./gemini-client.js";
+import { executeTool } from "./tools.js";
+import type { QueryAnalysis } from "./query-analyzer.js";
 
 // --- Types ---
 
@@ -50,14 +51,15 @@ const createTraceStep = (
   timestamp: Date.now(),
 });
 
-// --- Orchestrator ---
-
 export interface AgentOptions {
   readonly minScore: number;
   readonly allowExternalSearch: boolean;
   readonly topK: number;
   readonly geminiModel?: string;
   readonly isAdmin?: boolean;
+  readonly currentUserId?: string; // Mã số nhân viên đang thực hiện trò chuyện
+  readonly skipReranker?: boolean; // Tắt Rerank để tối ưu hóa độ trễ
+  readonly embeddingProvider?: "local" | "cloud"; // Lựa chọn nhà cung cấp embeddings
   readonly conversationHistory?: readonly {
     readonly role: string;
     readonly content: string;
@@ -68,9 +70,10 @@ export interface AgentOptions {
 }
 
 /**
- * Agentic RAG pipeline: analyze → retrieve → answer.
- * Non-policy intents (greeting, meta, off_topic, injection) are handled
- * by the caller (api.ts) before reaching this function.
+ * Agentic RAG Loop Orchestrator (ReAct Loop)
+ * Loops up to 3 times calling a cheap Reasoning Model (Gemma 4 MoE) to select
+ * tools and analyze results, then uses the main Answering Model (Gemini)
+ * to format and present the final answer with citations.
  */
 export const runAgent = async (
   question: string,
@@ -85,139 +88,294 @@ export const runAgent = async (
     onStep?.(step);
   };
 
-  // Step 1: Analyze query (intent, complexity, strategy)
-  const analyzeStart = Date.now();
-  const queryAnalysis = await analyzeQuery(question);
-  const analyzeDuration = Date.now() - analyzeStart;
-  onAnalysis?.(queryAnalysis);
-  emit(
-    createTraceStep(
-      "analyze",
-      "Query Analysis",
-      `Intent: ${queryAnalysis.intent}, Complexity: ${queryAnalysis.complexity}, Strategy: ${queryAnalysis.suggestedStrategy}. ${queryAnalysis.reasoning}`,
-      analyzeDuration,
-    ),
-  );
+  // 1. Initialize ReAct Scratchpad (including history)
+  const messages: AgenticStepMessage[] = [];
+  if (options.conversationHistory) {
+    for (const turn of options.conversationHistory) {
+      messages.push({
+        role: turn.role === "assistant" ? "model" : "user",
+        parts: [{ text: turn.content }],
+      });
+    }
+  }
+  messages.push({
+    role: "user",
+    parts: [{ text: question }],
+  });
 
-  // Step 2: Retrieve (strategy-based: direct, decompose, multi_retrieve)
+  let iterations = 0;
+  let allRetrievedChunks: RetrievedChunk[] = [];
+  let finalAnswerModel = "gemma-4-26b-a4b-it";
+  let hasCalledPoliciesTool = false;
+  let finalAnswerText = "";
+
+  const systemInstruction = 
+    "You are a professional HR assistant. Help the employee with their queries. " +
+    "Use your tools to lookup information. Always search policies if they ask about rules, allowances, or entitlements. " +
+    "Do not assume or guess if you lack information.";
+
+  // 2. Core ReAct loop (Max 3 steps to conserve tokens and reduce latency)
+  while (iterations < 3) {
+    iterations++;
+    const stepStart = Date.now();
+
+    const agentResult = await runGeminiAgenticStep(
+      messages,
+      systemInstruction,
+      "gemma-4-26b-a4b-it" // reasoning always defaults to Gemma 4 MoE (cheap & fast)
+    );
+
+    const stepDuration = Date.now() - stepStart;
+    finalAnswerModel = agentResult.model;
+
+    if (agentResult.functionCalls && agentResult.functionCalls.length > 0) {
+      // LLM wants to call one or more tools
+      const callDescriptions = agentResult.functionCalls
+        .map((fc) => `${fc.name}(${JSON.stringify(fc.args)})`)
+        .join(", ");
+      
+      emit(
+        createTraceStep(
+          "analyze",
+          `Lý luận Agent (Lượt ${iterations})`,
+          `Quyết định gọi công cụ: ${callDescriptions}`,
+          stepDuration,
+        )
+      );
+
+      // Record function calls to model history
+      messages.push({
+        role: "model",
+        parts: agentResult.functionCalls.map((fc) => ({
+          functionCall: { name: fc.name, args: fc.args },
+        })),
+      });
+
+      // Execute tools locally and append results
+      const responseParts = [];
+      for (const fc of agentResult.functionCalls) {
+        const toolStart = Date.now();
+        const toolResult = await executeTool(fc.name, fc.args, {
+          currentUserId: options.currentUserId,
+          topK: options.topK,
+          minScore: options.minScore,
+          isAdmin: options.isAdmin,
+          skipReranker: options.skipReranker,
+          embeddingProvider: options.embeddingProvider,
+        });
+        const toolDuration = Date.now() - toolStart;
+
+        if (fc.name === "search_hr_policies") {
+          hasCalledPoliciesTool = true;
+          // Accumulate chunks
+          if (toolResult.chunks) {
+            allRetrievedChunks.push(...toolResult.chunks);
+          }
+        }
+
+        // Xây dựng bản báo cáo kiểm toán chi tiết cho từng công cụ để hiển thị lên Dialog Modal
+        let toolDetail = "";
+        if (fc.name === "search_hr_policies") {
+          const chunksList = toolResult.chunks || [];
+          toolDetail = `[CÔNG CỤ TÌM KIẾM CHÍNH SÁCH: search_hr_policies]\n` +
+            `• Từ khóa truy vấn: "${fc.args.query}"\n` +
+            `• Số lượng tài liệu tìm thấy: ${chunksList.length} chunks\n\n` +
+            `--- DANH SÁCH CÁC CHUNK TÀI LIỆU TRUY XUẤT ---\n\n` +
+            chunksList.map((c: any, i: number) => {
+              return `[CHUNK TÀI LIỆU #${i + 1}]\n` +
+                `- ID: ${c.id}\n` +
+                `- Chính sách: ${c.title} (v${c.version})\n` +
+                `- Trạng thái: ${c.status === "current" ? "Đang áp dụng (current)" : c.status}\n` +
+                `- Độ tương đồng (Similarity Score): ${Math.round(c.score * 100)}%\n` +
+                `- Tính bảo mật: ${c.isPrivate ? "Bảo mật (Confidential)" : "Nội bộ (Internal)"}\n` +
+                `- Nội dung chi tiết:\n` +
+                `========================================================================\n` +
+                `${c.content}\n` +
+                `========================================================================`;
+            }).join("\n\n");
+        } else if (fc.name === "get_current_date") {
+          toolDetail = `[CÔNG CỤ THỜI GIAN: get_current_date]\n` +
+            `• Kết quả trả về từ hệ thống: "${toolResult.currentDate}"`;
+        } else if (fc.name === "calculate_leave_balance") {
+          toolDetail = `[CÔNG CỤ TRA CỨU PHÉP NĂM: calculate_leave_balance]\n` +
+            `• Mã nhân viên: ${toolResult.employeeId}\n` +
+            `• Họ và tên: ${toolResult.employeeName}\n` +
+            `• Tổng số ngày phép: ${toolResult.totalLeaveDays} ngày\n` +
+            `• Đã nghỉ: ${toolResult.usedLeaveDays} ngày\n` +
+            `• Còn lại (Khả dụng): ${toolResult.remainingLeaveDays} ngày`;
+        } else {
+          toolDetail = `Kết quả: ${JSON.stringify(toolResult, null, 2)}`;
+        }
+
+        emit(
+          createTraceStep(
+            "retrieve",
+            `Thực thi Công cụ: ${fc.name}`,
+            toolDetail,
+            toolDuration,
+          )
+        );
+
+        responseParts.push({
+          functionResponse: { name: fc.name, response: toolResult },
+        });
+      }
+
+      messages.push({
+        role: "user",
+        parts: responseParts,
+      });
+
+    } else {
+      // LLM generated a text response directly (no tools needed)
+      finalAnswerText = agentResult.text ?? "";
+      emit(
+        createTraceStep(
+          "analyze",
+          `Lý luận Agent (Lượt ${iterations})`,
+          `Đã có câu trả lời trực tiếp hoặc thông tin tự suy luận: "${finalAnswerText.slice(0, 100)}..."`,
+          stepDuration,
+        )
+      );
+      break; // Exit ReAct loop
+    }
+  }
+
+  // 3. Generate Final Answer (Dual-Model Strategy)
   const answerOptions: AnswerOptions = {
     minScore: options.minScore,
     allowExternalSearch: options.allowExternalSearch,
     topK: options.topK,
-    geminiModel: options.geminiModel,
+    geminiModel: options.geminiModel, // Main model chosen by user (e.g., Gemini 2.5 Flash)
     conversationHistory: options.conversationHistory,
   };
 
-  const retrieveStart = Date.now();
-  const retrievalResult = await executeRetrieval(queryAnalysis, question, {
-    topK: options.topK,
-    isAdmin: options.isAdmin,
-  });
-  emit(
-    createTraceStep(
-      "retrieve",
-      "Retrieval",
-      `Strategy: ${retrievalResult.strategy}, Queries: [${retrievalResult.queries.map((q) => `"${q.slice(0, 50)}"`).join(", ")}], Chunks: ${retrievalResult.chunks.length}`,
-      Date.now() - retrieveStart,
-    ),
-  );
+  // Simulated QueryAnalysis to keep front-end happy and preserve schema compatibility
+  const simulatedAnalysis: QueryAnalysis = {
+    intent: hasCalledPoliciesTool ? "policy_lookup" : "greeting",
+    complexity: "simple",
+    subQueries: [],
+    suggestedStrategy: "direct",
+    keyEntities: [],
+    reasoning: `Xử lý tự động qua Agentic Loop (${iterations} lượt).`,
+  };
+  onAnalysis?.(simulatedAnalysis);
 
-  // Step 3: Generate answer (streaming if onToken provided)
   const scoreStart = Date.now();
 
-  if (options.onToken) {
-    // Real streaming path
-    let answerText = "";
-    let answerResult: Omit<AgentResult, "answer" | "agentTrace" | "iterations" | "strategy" | "queryAnalysis"> = {
-      question,
-      mode: "gemini" as const,
-      model: "",
-      warning: null,
-      citations: [],
-      retrievedChunks: retrievalResult.chunks,
-    };
+  // If the agent retrieved policies, we let our High-Quality Main Model format the final answer!
+  if (hasCalledPoliciesTool && allRetrievedChunks.length > 0) {
+    if (options.onToken) {
+      // Streaming path with main model
+      let streamedText = "";
+      let answerResult = {
+        mode: "gemini" as const,
+        model: options.geminiModel || "gemini-2.5-flash",
+        warning: null as string | null,
+        citations: [] as readonly RetrievedChunk[],
+      };
 
-    const streamOptions: AnswerStreamOptions = {
-      ...answerOptions,
-      onToken: options.onToken,
-    };
+      const streamOptions: AnswerStreamOptions = {
+        ...answerOptions,
+        onToken: options.onToken,
+      };
 
-    for await (const event of answerQuestionStream(question, retrievalResult.chunks, streamOptions)) {
-      if (event.type === "token" && event.text) {
-        answerText += event.text;
-      } else if (event.type === "done" && event.result) {
-        answerResult = {
-          question,
-          mode: event.result.mode,
-          model: event.result.model,
-          warning: event.result.warning,
-          citations: event.result.citations,
-          retrievedChunks: event.result.retrievedChunks,
-        };
+      for await (const event of answerQuestionStream(question, allRetrievedChunks, streamOptions)) {
+        if (event.type === "token" && event.text) {
+          streamedText += event.text;
+        } else if (event.type === "done" && event.result) {
+          answerResult = {
+            mode: event.result.mode,
+            model: event.result.model,
+            warning: event.result.warning,
+            citations: event.result.citations,
+          };
+        }
       }
+
+      emit(
+        createTraceStep(
+          "generate",
+          "Tổng hợp câu trả lời (Mô hình chính)",
+          `${answerResult.citations.length} trích dẫn, Mode: ${answerResult.mode}, Model: ${answerResult.model}`,
+          Date.now() - scoreStart,
+        )
+      );
+
+      return {
+        question,
+        answer: streamedText,
+        mode: answerResult.mode,
+        model: answerResult.model,
+        warning: answerResult.warning,
+        citations: answerResult.citations,
+        retrievedChunks: allRetrievedChunks,
+        agentTrace: { steps: traceSteps, totalDuration: Date.now() - totalStart },
+        iterations,
+        strategy: "agentic_react",
+        queryAnalysis: simulatedAnalysis,
+      };
+    } else {
+      // Non-streaming path with main model
+      const answerResult = await answerQuestion(question, allRetrievedChunks, answerOptions);
+
+      emit(
+        createTraceStep(
+          "generate",
+          "Tổng hợp câu trả lời (Mô hình chính)",
+          `${answerResult.citations.length} trích dẫn, Mode: ${answerResult.mode}, Model: ${answerResult.model}`,
+          Date.now() - scoreStart,
+        )
+      );
+
+      return {
+        question,
+        answer: answerResult.answer,
+        mode: answerResult.mode,
+        model: answerResult.model,
+        warning: answerResult.warning,
+        citations: answerResult.citations,
+        retrievedChunks: allRetrievedChunks,
+        agentTrace: { steps: traceSteps, totalDuration: Date.now() - totalStart },
+        iterations,
+        strategy: "agentic_react",
+        queryAnalysis: simulatedAnalysis,
+      };
     }
-
-    emit(
-      createTraceStep(
-        "generate",
-        "Answer",
-        `${answerResult.citations.length} citations, Mode: ${answerResult.mode}, Model: ${answerResult.model}`,
-        Date.now() - scoreStart,
-      ),
-    );
-
-    const agentTrace: AgentTrace = {
-      steps: traceSteps,
-      totalDuration: Date.now() - totalStart,
-    };
-
-    return {
-      question,
-      answer: answerText,
-      mode: answerResult.mode,
-      model: answerResult.model,
-      warning: answerResult.warning,
-      citations: answerResult.citations,
-      retrievedChunks: answerResult.retrievedChunks,
-      agentTrace,
-      iterations: 1,
-      strategy: retrievalResult.strategy,
-      queryAnalysis,
-    };
   }
 
-  // Non-streaming path (original)
-  const answerResult = await answerQuestion(
-    question,
-    retrievalResult.chunks,
-    answerOptions,
-  );
+  // Fallback / Small talk: If no policy lookup tool was called, return the cheap model's text directly!
+  // This saves massive token counts and resolves greetings/thanks in exactly 1 cheap API call.
+  if (options.onToken) {
+    // Stream tokens manually for small talk if requested
+    const chars = finalAnswerText.split("");
+    for (let i = 0; i < chars.length; i += 5) {
+      const chunk = chars.slice(i, i + 5).join("");
+      options.onToken(chunk);
+      await new Promise((resolve) => setTimeout(resolve, 10)); // simulate typing delay
+    }
+  }
+
   emit(
     createTraceStep(
       "generate",
-      "Answer",
-      `${answerResult.citations.length} citations, Mode: ${answerResult.mode}, Model: ${answerResult.model}`,
+      "Tổng hợp câu trả lời (Mô hình rẻ)",
+      `Không dùng tài liệu, phản hồi trực tiếp bằng ${finalAnswerModel}`,
       Date.now() - scoreStart,
-    ),
+    )
   );
-
-  // Build final result
-  const agentTrace: AgentTrace = {
-    steps: traceSteps,
-    totalDuration: Date.now() - totalStart,
-  };
 
   return {
     question,
-    answer: answerResult.answer,
-    mode: answerResult.mode,
-    model: answerResult.model,
-    warning: answerResult.warning,
-    citations: answerResult.citations,
-    retrievedChunks: retrievalResult.chunks,
-    agentTrace,
-    iterations: 1,
-    strategy: retrievalResult.strategy,
-    queryAnalysis,
+    answer: finalAnswerText,
+    mode: "gemini",
+    model: finalAnswerModel,
+    warning: null,
+    citations: [],
+    retrievedChunks: [],
+    agentTrace: { steps: traceSteps, totalDuration: Date.now() - totalStart },
+    iterations,
+    strategy: "agentic_direct",
+    queryAnalysis: simulatedAnalysis,
   };
 };

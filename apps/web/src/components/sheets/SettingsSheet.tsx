@@ -5,6 +5,7 @@ import { fetchGeminiModels } from "../../apis/api";
 import { useConfigStore } from "../../store";
 import { T } from "../../vi";
 import { Badge } from "../ui/badge";
+import { Switch } from "../ui/switch";
 import {
   Select,
   SelectContent,
@@ -72,17 +73,11 @@ export const SettingsSheet = ({ open, onOpenChange }: SettingsSheetProps) => {
                     : "Pipeline tìm kiếm trực tiếp (nhanh, một lượt)"}
                 </div>
               </div>
-              <button
-                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ${
-                  agentMode
-                    ? "bg-violet-600 text-white"
-                    : "bg-white text-violet-700 ring-1 ring-violet-200"
-                }`}
-                type="button"
-                onClick={() => setAgentMode(!agentMode)}
-              >
-                {agentMode ? T.on : T.off}
-              </button>
+              <Switch
+                checked={agentMode}
+                onCheckedChange={setAgentMode}
+                checkedColor="bg-violet-600"
+              />
             </div>
           </div>
 
@@ -172,23 +167,68 @@ export const SettingsSheet = ({ open, onOpenChange }: SettingsSheetProps) => {
                   {T.googleSearchEnabled}
                 </div>
               </div>
-              <button
-                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ${
-                  settings.allowExternalSearch
-                    ? "bg-amber-500 text-white"
-                    : "bg-white text-amber-700 ring-1 ring-amber-200"
-                }`}
-                type="button"
-                onClick={() =>
+              <Switch
+                checked={settings.allowExternalSearch}
+                onCheckedChange={(checked) =>
                   setSettings({
                     ...settings,
-                    allowExternalSearch: !settings.allowExternalSearch,
+                    allowExternalSearch: checked,
                   })
                 }
-              >
-                {settings.allowExternalSearch ? T.on : T.off}
-              </button>
+                checkedColor="bg-amber-500"
+              />
             </div>
+          </div>
+
+          {/* Skip Reranker */}
+          <div className="rounded-2xl p-3 ring-1 bg-sky-50 ring-sky-100">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-sm font-semibold text-sky-950">
+                  🎯 Tái xếp hạng (Reranker)
+                </div>
+                <div className="text-xs leading-5 text-sky-700">
+                  {settings.useReranker
+                    ? "Bật BGE-Reranker cục bộ (Chính xác hơn, tốn CPU)"
+                    : "Tắt BGE-Reranker (Nhanh hơn ~3-4 giây)"}
+                </div>
+              </div>
+              <Switch
+                checked={!!settings.useReranker}
+                onCheckedChange={(checked) =>
+                  setSettings({
+                    ...settings,
+                    useReranker: checked,
+                  })
+                }
+                checkedColor="bg-sky-600"
+              />
+            </div>
+          </div>
+
+          {/* Embedding Provider */}
+          <div className="space-y-2">
+            <div className="text-sm font-semibold">🧬 Bộ sinh Vector (Embedding)</div>
+            <Select
+              value={settings.embeddingProvider || "local"}
+              onValueChange={(value) =>
+                setSettings({
+                  ...settings,
+                  embeddingProvider: value as "local" | "cloud",
+                })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Chọn bộ sinh vector" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="local">Cục bộ (HuggingFace CPU - ~1s)</SelectItem>
+                <SelectItem value="cloud">Đám mây (Google Cloud API - ~150ms)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs leading-5 text-slate-500">
+              Sử dụng Cloud API để giải phóng CPU của máy chủ và tăng đáng kể tốc độ phản hồi.
+            </p>
           </div>
         </SheetBody>
       </SheetContent>

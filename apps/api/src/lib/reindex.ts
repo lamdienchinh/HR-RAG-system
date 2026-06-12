@@ -238,9 +238,13 @@ export const retrieveChunks = async (
   question: string,
   topK: number,
   isAdmin: boolean = true,
+  options?: {
+    readonly skipReranker?: boolean;
+    readonly embeddingProvider?: "local" | "cloud";
+  },
 ): Promise<{ readonly chunks: readonly RetrievedChunk[] }> => {
   const candidatePool = topK * 3;
-  const queryVector = toPgVector(await embedText(question));
+  const queryVector = toPgVector(await embedText(question, options?.embeddingProvider || "local"));
   const privacyFilter = isAdmin ? "" : "AND is_private = false";
 
   // REPEATABLE READ: consistent snapshot — if reindex swaps tables mid-query,
@@ -335,6 +339,25 @@ export const retrieveChunks = async (
       }
       if (diversified.length >= topK * 2) break;
     }
+  }
+
+  if (options?.skipReranker) {
+    const finalCandidates = diversified.slice(0, topK);
+    const chunks = finalCandidates.map(([id, score]) => {
+      const row = chunkMap.get(id);
+      return {
+        id,
+        policyId: row?.policy_id ?? "",
+        title: row?.title ?? "",
+        version: row?.version ?? "",
+        status: row?.status ?? "",
+        content: row?.content ?? "",
+        isPrivate: row?.is_private ?? false,
+        distance: 1 - score,
+        score: score,
+      };
+    });
+    return { chunks };
   }
 
   const rerankInput: RerankCandidate[] = diversified.map(([id, score]) => ({

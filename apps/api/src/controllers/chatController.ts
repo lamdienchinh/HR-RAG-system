@@ -316,6 +316,9 @@ export const askConversationAgent = async (
       geminiModel: body.options.geminiModel,
       conversationHistory: agentConversationHistory,
       isAdmin,
+      currentUserId: request.user?.id,
+      skipReranker: body.skipReranker,
+      embeddingProvider: body.embeddingProvider,
     };
 
     const result = await runAgent(sanitizeResult.cleaned, {

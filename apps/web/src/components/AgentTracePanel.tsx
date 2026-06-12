@@ -13,6 +13,13 @@ import { useState } from "react";
 
 import type { AgentQueryAnalysis, AgentTraceStep } from "../apis/api";
 import { Badge } from "./ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "./ui/dialog";
 
 const STEP_ICONS: Record<AgentTraceStep["type"], typeof Brain> = {
   analyze: Brain,
@@ -53,6 +60,7 @@ export const AgentTracePanel = ({
   iterations,
 }: AgentTracePanelProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [selectedStep, setSelectedStep] = useState<AgentTraceStep | null>(null);
 
   if (!analysis && steps.length === 0 && !isRunning) return null;
 
@@ -157,27 +165,41 @@ export const AgentTracePanel = ({
                 const Icon = STEP_ICONS[step.type] ?? Brain;
                 const colorClass =
                   STEP_COLORS[step.type] ?? "text-slate-600 bg-slate-50";
+
+                // Truncate detail for general overview
+                const needsTruncation = step.detail.length > 90;
+                const displayText = needsTruncation
+                  ? `${step.detail.slice(0, 90)}...`
+                  : step.detail;
+
                 return (
                   <div
                     key={index}
                     className="relative flex items-start gap-3 py-1.5"
                   >
                     <div
-                      className={`relative z-10 grid size-[15px] shrink-0 place-items-center rounded-full ${colorClass}`}
+                      className={`relative z-10 grid size-[15px] shrink-0 place-items-center rounded-full mt-0.5 ${colorClass}`}
                     >
                       <Icon className="size-2.5" />
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-slate-800">
-                          {step.label}
-                        </span>
-                        <span className="text-[10px] tabular-nums text-slate-400">
-                          {step.duration}ms
-                        </span>
+                    <div className="min-w-0 flex-1 cursor-pointer select-none" onClick={() => setSelectedStep(step)}>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-slate-800 hover:text-violet-700 transition">
+                            {step.label}
+                          </span>
+                          <span className="text-[10px] tabular-nums text-slate-400">
+                            {step.duration}ms
+                          </span>
+                        </div>
+                        {needsTruncation && (
+                          <span className="text-[9px] font-semibold text-slate-400 hover:text-slate-600 transition">
+                            Chi tiết ⚙
+                          </span>
+                        )}
                       </div>
-                      <p className="mt-0.5 text-[11px] leading-4 text-slate-500">
-                        {step.detail}
+                      <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
+                        {displayText}
                       </p>
                     </div>
                   </div>
@@ -185,6 +207,27 @@ export const AgentTracePanel = ({
               })}
             </div>
           )}
+
+          {/* Dialog Modal xem chi tiết */}
+          <Dialog open={selectedStep !== null} onOpenChange={(open) => !open && setSelectedStep(null)}>
+            <DialogContent className="sm:max-w-[600px] max-h-[85vh] flex flex-col gap-4">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2.5 text-base">
+                  <div className="grid size-7 place-items-center rounded-lg bg-gradient-to-br from-violet-600 to-purple-600 text-white">
+                    <GitBranch className="size-3.5" />
+                  </div>
+                  <span>{selectedStep?.label}</span>
+                  <Badge className="text-[10px] tabular-nums bg-slate-100 text-slate-700 font-normal border-slate-200">
+                    {selectedStep?.duration}ms
+                  </Badge>
+                </DialogTitle>
+                <DialogDescription>Chi tiết luồng xử lý kỹ thuật và kết quả phản hồi của bước này</DialogDescription>
+              </DialogHeader>
+              <div className="mt-2 flex-1 overflow-y-auto rounded-2xl border border-slate-200/60 bg-slate-50 p-4 font-mono text-xs text-slate-700 leading-relaxed whitespace-pre-wrap max-h-[50vh]">
+                {selectedStep?.detail}
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {/* Running indicator */}
           {isRunning && steps.length === 0 && (

@@ -274,6 +274,9 @@ export const askAgent = async (
       topK: body.topK,
       geminiModel: body.options.geminiModel,
       isAdmin,
+      currentUserId: request.user?.id,
+      skipReranker: body.skipReranker,
+      embeddingProvider: body.embeddingProvider,
     };
 
     const result = await runAgent(sanitizeResult.cleaned, {

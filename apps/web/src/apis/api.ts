@@ -7,6 +7,8 @@ export interface AskSettings {
   readonly minScore: number;
   readonly allowExternalSearch: boolean;
   readonly geminiModel: string;
+  readonly useReranker?: boolean;
+  readonly embeddingProvider?: "local" | "cloud";
 }
 
 export interface CreatePolicyInput {
@@ -181,11 +183,12 @@ export const askQuestion = async (
     method: "POST",
     body: JSON.stringify({
       question,
-
       allowExternalSearch: settings.allowExternalSearch,
       topK: settings.topK,
       minScore: settings.minScore,
       geminiModel: settings.geminiModel,
+      skipReranker: !settings.useReranker,
+      embeddingProvider: settings.embeddingProvider,
     }),
   });
 
@@ -236,11 +239,12 @@ export const streamQuestion = async (
     headers,
     body: JSON.stringify({
       question,
-
       allowExternalSearch: settings.allowExternalSearch,
       topK: settings.topK,
       minScore: settings.minScore,
       geminiModel: settings.geminiModel,
+      skipReranker: !settings.useReranker,
+      embeddingProvider: settings.embeddingProvider,
     }),
   });
   if (!response.ok || !response.body) {
@@ -307,11 +311,12 @@ export const streamAgentQuestion = async (
     headers,
     body: JSON.stringify({
       question,
-
       allowExternalSearch: settings.allowExternalSearch,
       topK: settings.topK,
       minScore: settings.minScore,
       geminiModel: settings.geminiModel,
+      skipReranker: !settings.useReranker,
+      embeddingProvider: settings.embeddingProvider,
     }),
   });
   if (!response.ok || !response.body) {

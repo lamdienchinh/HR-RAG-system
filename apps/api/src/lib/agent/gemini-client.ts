@@ -1,5 +1,6 @@
 import { GoogleGenAI, GroundingChunk } from "@google/genai";
 import { config } from "../../config.js";
+import { agentToolsDeclarations } from "./tools.js";
 
 // ========================================================
 // 1. TYPES
@@ -247,5 +248,82 @@ export const runGeminiWithGrounding = async (
 
   throw new Error(
     `Tất cả các model Gemini đều thất bại. Lỗi cuối cùng: ${errors.at(-1)}`,
+  );
+};
+
+// ========================================================
+// 8. runGeminiAgenticStep — Single-step of Agentic Loop
+//    (Hỗ trợ chọn gọi hàm Tool và suy luận trung gian)
+// ========================================================
+
+export interface AgenticStepPart {
+  text?: string;
+  functionCall?: { name: string; args: any };
+  functionResponse?: { name: string; response: any };
+}
+
+export interface AgenticStepMessage {
+  role: string; // "user" | "model"
+  parts: AgenticStepPart[];
+}
+
+export interface AgenticStepResult {
+  readonly text?: string;
+  readonly functionCalls?: readonly { readonly name: string; readonly args: any }[];
+  readonly model: string;
+}
+
+export const runGeminiAgenticStep = async (
+  messages: readonly AgenticStepMessage[],
+  systemInstruction?: string,
+  preferredModel?: string,
+): Promise<AgenticStepResult> => {
+  if (!config.geminiApiKey) {
+    throw new Error("GEMINI_API_KEY is missing");
+  }
+
+  const configuredModel = preferredModel || "gemma-4-26b-a4b-it"; // Gemma 4 MoE là mặc định cho Agent Reasoning
+  const modelsToTry = [...new Set([configuredModel, ...CANDIDATE_MODELS])];
+  const errors: string[] = [];
+
+  const ai = new GoogleGenAI({ apiKey: config.geminiApiKey });
+
+  for (const modelName of modelsToTry) {
+    try {
+      const response = await ai.models.generateContent({
+        model: modelName,
+        contents: messages as any,
+        config: {
+          systemInstruction:
+            systemInstruction || "You are a helpful HR policy assistant.",
+          tools: agentToolsDeclarations, // Đăng ký bộ công cụ
+        },
+      });
+
+      const functionCalls = response.functionCalls;
+      if (functionCalls && functionCalls.length > 0) {
+        return {
+          functionCalls: functionCalls.map((fc) => ({
+            name: fc.name ?? "",
+            args: fc.args ?? {},
+          })),
+          model: modelName,
+        };
+      }
+
+      return {
+        text: response.text ?? "",
+        model: modelName,
+      };
+    } catch (error) {
+      errors.push(error instanceof Error ? error.message : String(error));
+      console.warn(
+        `[Agentic Step Warning] Model ${modelName} thất bại: ${error}. Đang thử model tiếp theo...`,
+      );
+    }
+  }
+
+  throw new Error(
+    `Tất cả các model Gemini/Gemma đều thất bại trong lượt Agent. Lỗi cuối cùng: ${errors.at(-1)}`,
   );
 };

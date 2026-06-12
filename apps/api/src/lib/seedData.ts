@@ -18,34 +18,44 @@ Nhân viên có thể chuyển tối đa 5 ngày phép chưa sử dụng sang n�
 
 Tất cả các yêu cầu nghỉ phép (phép năm, nghỉ không lương, nghỉ đặc biệt) phải được nộp dưới dạng điện tử thông qua Cổng thông tin nhân sự (HR Portal).
 
-**Thời gian báo trước yêu cầu nghỉ phép:**
-- Nghỉ phép từ 3 ngày làm việc liên tiếp trở xuống cần được quản lý phê duyệt trước ít nhất 3 ngày làm việc.
-- Yêu cầu nghỉ phép trên 3 ngày làm việc liên tiếp cần báo trước ít nhất 10 ngày làm việc.
+## Quy trình Đăng ký Nghỉ phép Chi tiết (4 Bước bắt buộc):
 
-**Trường hợp nghỉ phép khẩn cấp:**
-Trong trường hợp bị ốm đột xuất hoặc có việc khẩn cấp, nhân viên phải thông báo cho quản lý trực tiếp qua Slack hoặc gọi điện thoại trước 09:00 sáng của ngày nghỉ. Đơn xin nghỉ phép chính thức phải được nộp trên HR Portal trong vòng 24 giờ sau khi quay lại làm việc.
+* **Bước 1: Kiểm tra số ngày phép khả dụng**
+  Nhân viên truy cập ứng dụng HR Portal, vào mục "My Leave" để kiểm tra số ngày phép còn lại. Chỉ được đăng ký nghỉ phép nếu số ngày nghỉ dự kiến nhỏ hơn hoặc bằng số ngày phép khả dụng còn lại.
 
-**Phê duyệt:**
-Yêu cầu nghỉ phép chỉ có hiệu lực sau khi nhận được sự phê duyệt điện tử từ quản lý trực tiếp. Nhân viên không nên đặt vé xe, vé máy bay hoặc lên kế hoạch trước khi kỳ nghỉ phép được phê duyệt chính thức.
+* **Bước 2: Gửi yêu cầu xin nghỉ phép trên HR Portal**
+  Nhân viên tạo đơn xin nghỉ phép mới (New Leave Request) trên HR Portal, chọn loại phép (Nghỉ phép năm, Nghỉ không lương, Nghỉ ốm...), chọn thời gian nghỉ và viết lý do nghỉ, sau đó nhấn "Submit".
+  - Đơn xin nghỉ phép từ 3 ngày làm việc liên tiếp trở xuống phải được nộp trước **ít nhất 3 ngày làm việc**.
+  - Đơn xin nghỉ phép trên 3 ngày làm việc liên tiếp phải được nộp trước **ít nhất 10 ngày làm việc**.
+
+* **Bước 3: Quản lý trực tiếp phê duyệt**
+  Hệ thống sẽ gửi thông báo tự động đến Quản lý trực tiếp (Line Manager) của nhân viên. Quản lý có trách nhiệm phê duyệt hoặc từ chối đơn trong vòng **48 giờ** làm việc kể từ khi nhận đơn.
+
+* **Bước 4: Xác nhận và Bàn giao công việc**
+  Sau khi đơn được phê duyệt điện tử từ quản lý, nhân viên có trách nhiệm:
+  - Thiết lập trạng thái tự động trả lời email "Out of Office" trên hòm thư công ty và cập nhật trạng thái hoạt động trên Slack.
+  - Thực hiện bàn giao các đầu việc đang xử lý cho đồng nghiệp cùng bộ phận và thông báo cho các đối tác liên quan trước khi nghỉ.
+
+Trong trường hợp bị ốm đột xuất hoặc có việc khẩn cấp (Nghỉ phép khẩn cấp), nhân viên phải thông báo cho quản lý trực tiếp qua Slack hoặc gọi điện thoại trước 09:00 sáng của ngày nghỉ. Đơn xin nghỉ phép chính thức phải được nộp bổ sung trên HR Portal trong vòng 24 giờ sau khi quay lại làm việc.
 
 Nghỉ phép không lương có thể được xem xét theo từng trường hợp, yêu cầu phê duyệt từ quản lý trực tiếp và HRBP. Thời gian nghỉ phép không lương không được vượt quá 30 ngày dương lịch trong một năm.`,
   },
   {
     id: "overtime-policy",
-    title: "Chính Sách Làm Thêm Giờ",
+    title: "Chính Sách Làm Thêm Giờ (OT)",
     category: "overtime",
     version: "2026.1",
     status: "current",
     sensitivity: "internal",
-    content: `# Chính Sách Làm Thêm Giờ
+    content: `# Chính Sách Làm Thêm Giờ (OT)
 
-Làm thêm giờ phải được quản lý trực tiếp phê duyệt trước khi bắt đầu. Làm thêm giờ chưa được phê duyệt sẽ không được hoàn trả trừ khi Phòng Nhân sự cấp ngoại lệ cho sự cố production đã được ghi nhận.
+Làm thêm giờ (OT - Overtime) phải được quản lý trực tiếp phê duyệt trước khi bắt đầu. Làm thêm giờ chưa được phê duyệt sẽ không được tính lương và hoàn trả trừ khi Phòng Nhân sự cấp ngoại lệ cho sự cố production đã được ghi nhận.
 
-Làm thêm giờ ngày thường được trả 1.5 lần mức lương giờ tương đương. Làm việc ngày Thứ Bảy hoặc Chủ Nhật được tính là làm thêm giờ cuối tuần. Làm thêm giờ cuối tuần được trả 2.0 lần mức lương giờ tương đương khi đã được phê duyệt trước.
+Làm thêm giờ (OT) ngày thường được trả 1.5 lần mức lương giờ tương đương. Làm việc ngày Thứ Bảy hoặc Chủ Nhật được tính là làm thêm giờ cuối tuần. Làm thêm giờ cuối tuần được trả 2.0 lần mức lương giờ tương đương khi đã được phê duyệt trước.
 
-Làm thêm giờ cuối tuần liên quan đến sự cố production Severity 1 có thể được phê duyệt bổ sung trong vòng 24 giờ nếu incident commander thêm nhân viên vào bản ghi sự cố và quản lý xác nhận số giờ.
+Làm thêm giờ (OT) cuối tuần liên quan đến sự cố production Severity 1 có thể được phê duyệt bổ sung trong vòng 24 giờ nếu incident commander thêm nhân viên vào bản ghi sự cố và quản lý xác nhận số giờ.
 
-Nhân viên phải nộp yêu cầu thanh toán làm thêm giờ trong vòng 5 ngày làm việc kèm mã phê duyệt, ngày, giờ bắt đầu, giờ kết thúc và mã sự cố hoặc dự án.`,
+Nhân viên phải nộp yêu cầu thanh toán làm thêm giờ (OT) trong vòng 5 ngày làm việc kèm mã phê duyệt, ngày, giờ bắt đầu, giờ kết thúc và mã sự cố hoặc dự án.`,
   },
   {
     id: "leave-of-absence",
@@ -383,13 +393,28 @@ Chính sách hiện tại đã giới hạn xuống còn 3 ngày mỗi tuần v�
     sensitivity: "internal",
     content: `# Chính Sách Giờ Làm Việc và Chấm Công
 
-Giờ làm việc tiêu chuẩn của công ty là 8 tiếng một ngày, từ Thứ Hai đến Thứ Sáu hàng tuần. Khung giờ làm việc chuẩn là từ 08:30 đến 17:30, nghỉ trưa 1 tiếng từ 12:00 đến 13:00 (không tính vào giờ làm việc).
+## 1. Quy định chung về Giờ làm việc và Số ngày làm việc
+* **Số ngày làm việc trong tuần:** Toàn thể nhân viên công ty làm việc **5 ngày mỗi tuần**, từ **Thứ Hai đến Thứ Sáu**. Thứ Bảy và Chủ Nhật là ngày nghỉ cuối tuần tiêu chuẩn.
+* **Số giờ làm việc tiêu chuẩn:** **8 tiếng một ngày** (tương đương 40 tiếng mỗi tuần).
+* **Khung giờ làm việc tiêu chuẩn:** Từ **08:30 đến 17:30**.
+* **Thời gian nghỉ trưa:** 1 tiếng từ **12:00 đến 13:00** hàng ngày (không tính vào 8 giờ làm việc tiêu chuẩn).
 
-Công ty áp dụng cơ chế Giờ làm việc linh hoạt (Flexitime). Nhân viên có thể thực hiện check-in trong khoảng thời gian từ 08:00 đến 09:30 và ra về sau khi đã hoàn thành đủ 8 giờ làm việc tại văn phòng (ví dụ: check-in lúc 09:15 sẽ check-out lúc 18:15).
+## 2. Cơ chế Giờ làm việc linh hoạt (Flexitime)
+Nhân viên được phép linh động giờ đến văn phòng (check-in) để tránh tắc đường hoặc giải quyết việc cá nhân đầu giờ, cụ thể:
+* **Khung giờ check-in linh hoạt:** Từ **08:00 đến 09:30** sáng.
+* **Cách tính giờ về:** Nhân viên ra về sau khi đã làm việc đủ 8 tiếng (không kể 1 tiếng nghỉ trưa). 
+  - *Ví dụ 1:* Check-in lúc 08:00 $\rightarrow$ Được ra về lúc 17:00.
+  - *Ví dụ 2:* Check-in lúc 09:15 $\rightarrow$ Được ra về lúc 18:15.
+  - *Ví dụ 3:* Nhân viên đến văn phòng sau 09:30 sẽ bị tính là **đi muộn** trừ trường hợp khẩn cấp được Quản lý trực tiếp phê duyệt trước.
 
-Nhân viên bắt buộc phải thực hiện chấm công bằng vân tay hoặc qua ứng dụng di động nội bộ của công ty khi đến và khi về. Trường hợp quên chấm công phải gửi yêu cầu phê duyệt giải trình từ quản lý trực tiếp trong vòng 48 giờ.
-
-Đi muộn (sau 09:30) quá 3 lần trong một tháng dương lịch mà không có lý do chính đáng được quản lý phê duyệt trước sẽ bị nhắc nhở bằng văn bản bởi Bộ phận Nhân sự.`,
+## 3. Quy trình Chấm công và Báo cáo Đi muộn / Về sớm
+Nhân viên phải tuân thủ nghiêm ngặt quy trình chấm công sau:
+* **Bước 1: Thực hiện Chấm công hàng ngày (Check-in/Check-out)**
+  Nhân viên thực hiện quét vân tay tại văn phòng hoặc chấm công bằng định vị GPS trên ứng dụng di động HR Portal của công ty khi đến và khi ra về.
+* **Bước 2: Xử lý lỗi Quên chấm công**
+  Nếu quên chấm công, nhân viên phải gửi đơn giải trình "Bổ sung chấm công" trên HR Portal trong vòng **48 giờ** kể từ ngày quên để hệ thống ghi nhận bổ sung.
+* **Bước 3: Xử lý khi đi muộn / về sớm**
+  Trường hợp cần đi muộn hoặc về sớm vì lý do cá nhân (khám bệnh, việc gia đình), nhân viên phải gửi đơn xin "Đi muộn/Về sớm" trên hệ thống trước ít nhất **1 ngày làm việc** để Quản lý trực tiếp phê duyệt. Đi muộn quá 3 lần/tháng không có lý do được phê duyệt sẽ bị xử lý kỷ luật bằng văn bản bởi Phòng Nhân sự.`,
   },
   {
     id: "public-holidays-policy",

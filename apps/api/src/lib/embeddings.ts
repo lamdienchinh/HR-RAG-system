@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
 import { pipeline, type FeatureExtractionPipeline } from '@huggingface/transformers';
+import { GoogleGenAI } from '@google/genai';
+import { config } from '../config.js';
 
 export const vectorDimensions = 384;
 const modelId = 'Xenova/paraphrase-multilingual-MiniLM-L12-v2';
@@ -45,19 +47,40 @@ const getExtractor = async (): Promise<FeatureExtractionPipeline> => {
 
 /**
  * Embeds a single text string, with caching support.
- * 
- * EXAMPLE:
- *  - Input: "Hello world"
- *  - Output: [0.012, -0.045, ..., 0.089] (Array of 384 dimensions)
  */
-export const embedText = async (text: string): Promise<readonly number[]> => {
-  const key = hashText(text);
+export const embedText = async (
+  text: string,
+  provider: "local" | "cloud" = "local"
+): Promise<readonly number[]> => {
+  const key = `${provider}:${hashText(text)}`;
   const cached = embeddingCache.get(key);
   if (cached && (Date.now() - cached.ts) < CACHE_TTL_MS) return cached.vector;
 
-  const model = await getExtractor();
-  const output = await model(text, { pooling: 'mean', normalize: true });
-  const vector = Array.from(output.data as Float32Array).slice(0, vectorDimensions);
+  let vector: number[];
+
+  if (provider === "cloud") {
+    if (!config.geminiApiKey) {
+      throw new Error("GEMINI_API_KEY is missing for cloud embeddings");
+    }
+    const ai = new GoogleGenAI({ apiKey: config.geminiApiKey });
+    const response = await ai.models.embedContent({
+      model: "text-embedding-004",
+      contents: text,
+      config: {
+        outputDimensionality: vectorDimensions,
+      },
+    });
+    
+    const values = response.embeddings?.[0]?.values;
+    if (!values || values.length === 0) {
+      throw new Error("Failed to generate cloud embedding values");
+    }
+    vector = Array.from(values);
+  } else {
+    const model = await getExtractor();
+    const output = await model(text, { pooling: 'mean', normalize: true });
+    vector = Array.from(output.data as Float32Array).slice(0, vectorDimensions);
+  }
 
   embeddingCache.set(key, { vector, ts: Date.now() });
   evictExpired();
@@ -66,58 +89,97 @@ export const embedText = async (text: string): Promise<readonly number[]> => {
 
 /**
  * Embeds multiple text strings efficiently using batch inference and hybrid cache lookup.
- * 
- * WHY IS IT NEEDED: Running inference sequentially in a loop is highly inefficient. 
- * This function batches uncached items to utilize parallel CPU/GPU execution while preserving cache benefits.
- * 
- * EXAMPLE:
- *  - Input: ["Paragraph 1", "Paragraph 2"]
- *  - Output: [[0.012, ...], [-0.034, ...]] (Array of 384-dimension vectors)
  */
-export const embedTexts = async (texts: readonly string[]): Promise<readonly (readonly number[])[]> => {
+export const embedTexts = async (
+  texts: readonly string[],
+  provider: "local" | "cloud" = "local"
+): Promise<readonly (readonly number[])[]> => {
+  if (provider === "cloud") {
+    if (!config.geminiApiKey) {
+      throw new Error("GEMINI_API_KEY is missing for cloud embeddings");
+    }
+    const ai = new GoogleGenAI({ apiKey: config.geminiApiKey });
+    const results: (readonly number[])[] = new Array(texts.length);
+    const uncachedIndices: number[] = [];
+    const uncachedTexts: string[] = [];
+
+    for (let i = 0; i < texts.length; i++) {
+      const text = texts[i];
+      const key = `cloud:${hashText(text)}`;
+      const cached = embeddingCache.get(key);
+
+      if (cached && (Date.now() - cached.ts) < CACHE_TTL_MS) {
+        results[i] = cached.vector;
+      } else {
+        uncachedIndices.push(i);
+        uncachedTexts.push(text);
+      }
+    }
+
+    if (uncachedTexts.length > 0) {
+      const response = await ai.models.embedContent({
+        model: "text-embedding-004",
+        contents: uncachedTexts,
+        config: {
+          outputDimensionality: vectorDimensions,
+        },
+      });
+
+      const embeddings = response.embeddings;
+      if (!embeddings || embeddings.length !== uncachedTexts.length) {
+        throw new Error("Failed to generate batch cloud embeddings");
+      }
+
+      for (let i = 0; i < uncachedTexts.length; i++) {
+        const values = embeddings[i]?.values;
+        if (!values) throw new Error("Cloud embedding values are missing");
+        const vector = Array.from(values);
+
+        const originalIndex = uncachedIndices[i];
+        results[originalIndex] = vector;
+
+        const text = uncachedTexts[i];
+        const key = `cloud:${hashText(text)}`;
+        embeddingCache.set(key, { vector, ts: Date.now() });
+      }
+      evictExpired();
+    }
+    return results;
+  }
+
   const model = await getExtractor();
   const results: (readonly number[])[] = new Array(texts.length);
   const uncachedIndices: number[] = [];
   const uncachedTexts: string[] = [];
 
-  // STEP 1: HYBRID CACHE LOOKUP
-  // Filter out which chunks are already cached and which ones need raw embedding
   for (let i = 0; i < texts.length; i++) {
     const text = texts[i];
-    const key = hashText(text);
+    const key = `local:${hashText(text)}`;
     const cached = embeddingCache.get(key);
 
     if (cached && (Date.now() - cached.ts) < CACHE_TTL_MS) {
-      results[i] = cached.vector; // Retrieve from cache instantly
+      results[i] = cached.vector;
     } else {
       uncachedIndices.push(i);
-      uncachedTexts.push(text); // Mark for batch processing
+      uncachedTexts.push(text);
     }
   }
 
-  // STEP 2: BATCH INFERENCE FOR UNCACHED TEXTS
   if (uncachedTexts.length > 0) {
-    // Pipeline supports passing an array directly for optimized batch processing
     const output = await model(uncachedTexts, { pooling: 'mean', normalize: true });
-    
-    // The outputs are returned as a flat 1D array. We slice it into chunks of "vectorDimensions"
     const flatData = output.data as Float32Array;
 
     for (let i = 0; i < uncachedTexts.length; i++) {
       const startIndex = i * vectorDimensions;
       const vector = Array.from(flatData.subarray(startIndex, startIndex + vectorDimensions));
 
-      // Put it back in the correct position of the original array
       const originalIndex = uncachedIndices[i];
       results[originalIndex] = vector;
 
-      // Save to cache for future requests
       const text = uncachedTexts[i];
-      const key = hashText(text);
+      const key = `local:${hashText(text)}`;
       embeddingCache.set(key, { vector, ts: Date.now() });
     }
-
-    // Trigger cleanup once after the whole batch instead of on every single item
     evictExpired();
   }
 

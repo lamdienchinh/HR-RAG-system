@@ -24,6 +24,8 @@ const loadConfig = (): { settings: AskSettings; agentMode: boolean } => {
         minScore: parsed.settings?.minScore ?? 0.05,
         allowExternalSearch: parsed.settings?.allowExternalSearch ?? false,
         geminiModel: parsed.settings?.geminiModel ?? "",
+        useReranker: parsed.settings?.useReranker ?? true,
+        embeddingProvider: parsed.settings?.embeddingProvider ?? "local",
       },
       agentMode: parsed.agentMode ?? false,
     };
@@ -34,6 +36,8 @@ const loadConfig = (): { settings: AskSettings; agentMode: boolean } => {
         minScore: 0.05,
         allowExternalSearch: false,
         geminiModel: "",
+        useReranker: true,
+        embeddingProvider: "local",
       },
       agentMode: false,
     };

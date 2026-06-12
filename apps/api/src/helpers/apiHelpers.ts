@@ -33,6 +33,8 @@ export const parseAskBody = (
   readonly question: string;
   readonly options: AnswerOptions;
   readonly topK: number;
+  readonly skipReranker: boolean;
+  readonly embeddingProvider: "local" | "cloud";
 } => {
   if (
     !isRecord(body) ||
@@ -63,6 +65,8 @@ export const parseAskBody = (
       geminiModel,
     },
     topK: clampedTopK,
+    skipReranker: body.skipReranker === true,
+    embeddingProvider: (body.embeddingProvider === "cloud" ? "cloud" : "local") as "local" | "cloud",
   };
 };
 

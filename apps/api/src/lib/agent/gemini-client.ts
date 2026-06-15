@@ -22,8 +22,8 @@ export interface AgentResult {
 // ========================================================
 
 const CANDIDATE_MODELS = [
-  "gemini-3.5-flash",
   "gemini-2.5-flash",
+  "gemini-3.5-flash",
   "gemini-3-flash-preview",
   "gemini-2.0-flash",
   "gemini-2.0-flash-001",
@@ -68,6 +68,7 @@ export const runGeminiPureAgent = async (
   prompt: string,
   systemInstruction?: string,
   model?: string,
+  temperature?: number,
 ): Promise<AgentResult> => {
   if (!config.geminiApiKey) {
     throw new Error("GEMINI_API_KEY is missing");
@@ -85,6 +86,7 @@ export const runGeminiPureAgent = async (
         model: modelName,
         config: {
           systemInstruction: systemInstruction || "You are a helpful assistant.",
+          temperature: temperature,
         },
       });
 
@@ -127,6 +129,7 @@ export async function* runGeminiWithGroundingStream(
   systemInstruction?: string,
   useGoogleSearch: boolean = false,
   preferredModel?: string,
+  temperature?: number,
 ): AsyncGenerator<StreamChunk> {
   if (!config.geminiApiKey) {
     throw new Error("GEMINI_API_KEY is missing");
@@ -147,6 +150,7 @@ export async function* runGeminiWithGroundingStream(
         contents: [{ role: "user", parts: [{ text: prompt }] }],
         config: {
           systemInstruction: systemInstruction || "You are a helpful assistant.",
+          temperature: temperature,
           ...(tools ? { tools } : {}),
         },
       });
@@ -195,6 +199,7 @@ export const runGeminiWithGrounding = async (
   systemInstruction?: string,
   useGoogleSearch: boolean = false,
   preferredModel?: string,
+  temperature?: number,
 ): Promise<AgentResult> => {
   if (!config.geminiApiKey) {
     throw new Error("GEMINI_API_KEY is missing");
@@ -215,6 +220,7 @@ export const runGeminiWithGrounding = async (
         contents: [{ role: "user", parts: [{ text: prompt }] }],
         config: {
           systemInstruction: systemInstruction || "You are a helpful assistant.",
+          temperature: temperature,
           ...(tools ? { tools } : {}),
         },
       });
@@ -264,6 +270,7 @@ export const runGeminiAgenticStep = async (
   messages: readonly AgenticStepMessage[],
   systemInstruction?: string,
   preferredModel?: string,
+  temperature?: number,
 ): Promise<AgenticStepResult> => {
   if (!config.geminiApiKey) {
     throw new Error("GEMINI_API_KEY is missing");
@@ -283,6 +290,7 @@ export const runGeminiAgenticStep = async (
         config: {
           systemInstruction: systemInstruction || "You are a helpful HR policy assistant.",
           tools: agentToolsDeclarations, // Đăng ký bộ công cụ
+          temperature: temperature,
         },
       });
 

@@ -147,6 +147,7 @@ const generateWithFallback = async (
         undefined,
         true,
         preferredModel,
+        0.15, // Low temperature for high precision and citation compliance
       );
       return {
         answer: result.text,
@@ -165,6 +166,7 @@ const generateWithFallback = async (
       undefined,
       false,
       preferredModel,
+      0.15, // Low temperature for high precision and citation compliance
     );
     return {
       answer: result.text,
@@ -185,6 +187,8 @@ const generateExternalReference = async (question: string): Promise<GenerateResu
     composeExternalReferencePrompt(question),
     undefined,
     true, // luôn dùng Google Search cho external reference
+    undefined,
+    0.7, // Higher temperature for more natural external reference answers
   );
 
   if (result.externalSources.length === 0) {
@@ -400,7 +404,13 @@ export const answerQuestionStream = async function* (
     let model = "";
     let externalSources: readonly ExternalSource[] = [];
 
-    const stream = runGeminiWithGroundingStream(prompt, undefined, useSearch, options.geminiModel);
+    const stream = runGeminiWithGroundingStream(
+      prompt,
+      undefined,
+      useSearch,
+      options.geminiModel,
+      0.15, // Low temperature for high precision and citation compliance
+    );
     for await (const chunk of stream) {
       if (chunk.done) {
         model = chunk.model;

@@ -126,6 +126,7 @@ export const runAgent = async (question: string, options: AgentOptions): Promise
       messages,
       systemInstruction,
       "gemma-4-26b-a4b-it", // reasoning always defaults to Gemma 4 MoE (cheap & fast)
+      0.15, // Low temperature for high precision and strict reasoning
     );
 
     const stepDuration = Date.now() - stepStart;
@@ -298,7 +299,8 @@ export const runAgent = async (question: string, options: AgentOptions): Promise
     let augmentedQuestion = question;
     if (executedToolSummaries.size > 0) {
       augmentedQuestion =
-        `[THÔNG TIN TRA CỨU HỆ THỐNG]\n` +
+        `[BỐI CẢNH THỰC TẾ HỆ THỐNG]\n` +
+        `*(Đây là thông tin thực tế từ hệ thống, hãy dùng nó để trả lời trực tiếp câu hỏi mà KHÔNG được viết kèm bất kỳ nhãn trích dẫn nào cho bối cảnh này, và tuyệt đối KHÔNG viết cụm từ "[BỐI CẢNH THỰC TẾ HỆ THỐNG]" hay bất kỳ thẻ bối cảnh nào vào câu trả lời)*\n` +
         Array.from(executedToolSummaries.values()).join("\n") +
         `\n\n[CÂU HỎI CỦA NGƯỜI DÙNG]\n` +
         question;

@@ -298,8 +298,34 @@ export const askConversationAgent = async (
     }
 
     if (analysis.intent === "injection") {
-      sendStreamEvent(response, "error", { error: "Câu hỏi không được phép." });
-      response.end();
+      const injectionAnswer =
+        "Xin lỗi, câu hỏi hoặc yêu cầu này không được hỗ trợ. Tôi là trợ lý HR và chỉ hỗ trợ giải đáp các thắc mắc liên quan đến chính sách nhân sự.";
+      sendStreamEvent(response, "evidence", {
+        question: body.question,
+        mode: "gemini",
+        model: "intent-classifier",
+        warning: null,
+        citations: [],
+        retrievedChunks: [],
+        externalSources: [],
+        conversationStatus: await getConversationStatus(conversationId),
+      });
+      await streamAnswerTokens(response, injectionAnswer);
+      await addMessage(conversationId, "assistant", injectionAnswer, []);
+      sendStreamEvent(response, "done", {
+        result: {
+          question: body.question,
+          answer: injectionAnswer,
+          mode: "gemini",
+          model: "intent-classifier",
+          warning: null,
+          confidence: null,
+          citations: [],
+          retrievedChunks: [],
+          externalSources: [],
+          notFound: false,
+        },
+      });
       return;
     }
 
@@ -545,8 +571,34 @@ export const askConversationStandard = async (
     }
 
     if (analysis.intent === "injection") {
-      sendStreamEvent(response, "error", { error: "Câu hỏi không được phép." });
-      response.end();
+      const injectionAnswer =
+        "Xin lỗi, câu hỏi hoặc yêu cầu này không được hỗ trợ. Tôi là trợ lý HR và chỉ hỗ trợ giải đáp các thắc mắc liên quan đến chính sách nhân sự.";
+      sendStreamEvent(response, "evidence", {
+        question: body.question,
+        mode: "gemini",
+        model: "intent-classifier",
+        warning: null,
+        citations: [],
+        retrievedChunks: [],
+        externalSources: [],
+        conversationStatus: await getConversationStatus(conversationId),
+      });
+      await streamAnswerTokens(response, injectionAnswer);
+      await addMessage(conversationId, "assistant", injectionAnswer, []);
+      sendStreamEvent(response, "done", {
+        result: {
+          question: body.question,
+          answer: injectionAnswer,
+          mode: "gemini",
+          model: "intent-classifier",
+          warning: null,
+          confidence: null,
+          citations: [],
+          retrievedChunks: [],
+          externalSources: [],
+          notFound: false,
+        },
+      });
       return;
     }
 

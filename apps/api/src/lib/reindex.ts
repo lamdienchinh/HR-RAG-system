@@ -219,6 +219,10 @@ const expandQueryTerms = (question: string): string => {
     "bắt đầu": ["onboarding", "nhận việc", "start date", "nhân viên mới"],
     "quản lý": ["manager", "phê duyệt", "approval"],
     "thai sản": ["parental leave", "maternity", "paternity", "nghỉ thai sản"], // FIXED: Corrected Vietnamese spelling typo ('thái sản' -> 'thai sản')
+    "thứ bảy": ["thứ bảy", "thứ 7", "chủ nhật", "cuối tuần", "ngày nghỉ", "lịch làm việc", "ngày làm việc", "giờ làm việc", "working hours"],
+    "thứ 7": ["thứ bảy", "thứ 7", "chủ nhật", "cuối tuần", "ngày nghỉ", "lịch làm việc", "ngày làm việc", "giờ làm việc", "working hours"],
+    "chủ nhật": ["thứ bảy", "thứ 7", "chủ nhật", "cuối tuần", "ngày nghỉ", "lịch làm việc", "ngày làm việc", "giờ làm việc", "working hours"],
+    "cuối tuần": ["thứ bảy", "thứ 7", "chủ nhật", "cuối tuần", "ngày nghỉ", "lịch làm việc", "ngày làm việc", "giờ làm việc", "working hours"]
   };
 
   const lowerQuestion = question.toLowerCase();
@@ -313,7 +317,7 @@ export const retrieveChunks = async (
   // FIXED: Balanced Policy diversification algorithm.
   // We allow up to 2 high-scoring chunks of the same policy to co-exist in Pass 1.
   // This preserves sequential segments of the target policy while preventing noise policies from hogging the candidate window.
-  const MAX_CHUNKS_PER_POLICY = 2;
+  const MAX_CHUNKS_PER_POLICY = 3;
   const policyCounts = new Map<string, number>();
   const diversified: [string, number][] = [];
 

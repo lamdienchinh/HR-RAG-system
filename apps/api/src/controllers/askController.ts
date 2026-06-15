@@ -73,7 +73,19 @@ export const askStandard = async (
       return;
     }
     if (analysis.intent === "injection") {
-      sendError(response, new Error("Câu hỏi không được phép."), 400);
+      response.json({
+        question: body.question,
+        answer:
+          "Xin lỗi, câu hỏi hoặc yêu cầu này không được hỗ trợ. Tôi là trợ lý HR và chỉ hỗ trợ giải đáp các thắc mắc liên quan đến chính sách nhân sự.",
+        mode: "gemini",
+        model: "intent-classifier",
+        warning: null,
+        confidence: null,
+        citations: [],
+        retrievedChunks: [],
+        externalSources: [],
+        notFound: false,
+      });
       return;
     }
 
@@ -200,8 +212,32 @@ export const askStream = async (
     }
 
     if (analysis.intent === "injection") {
-      sendStreamEvent(response, "error", { error: "Câu hỏi không được phép." });
-      response.end();
+      const injectionAnswer =
+        "Xin lỗi, câu hỏi hoặc yêu cầu này không được hỗ trợ. Tôi là trợ lý HR và chỉ hỗ trợ giải đáp các thắc mắc liên quan đến chính sách nhân sự.";
+      sendStreamEvent(response, "evidence", {
+        question: body.question,
+        mode: "gemini",
+        model: "intent-classifier",
+        warning: null,
+        citations: [],
+        retrievedChunks: [],
+        externalSources: [],
+      });
+      await streamAnswerTokens(response, injectionAnswer);
+      sendStreamEvent(response, "done", {
+        result: {
+          question: body.question,
+          answer: injectionAnswer,
+          mode: "gemini",
+          model: "intent-classifier",
+          warning: null,
+          confidence: null,
+          citations: [],
+          retrievedChunks: [],
+          externalSources: [],
+          notFound: false,
+        },
+      });
       return;
     }
 

@@ -54,6 +54,7 @@ export interface ToolContext {
   readonly isAdmin?: boolean;
   readonly skipReranker?: boolean;
   readonly embeddingProvider?: "local" | "cloud";
+  readonly originalQuestion?: string;
 }
 
 export const executeTool = async (
@@ -63,8 +64,15 @@ export const executeTool = async (
 ): Promise<any> => {
   switch (name) {
     case "search_hr_policies": {
-      const query = args.query as string;
+      let query = args.query as string;
       if (!query) throw new Error("Missing required 'query' argument");
+      
+      const originalQuestion = context.originalQuestion?.toLowerCase() || "";
+      const weekendKeywords = ["thứ bảy", "thứ 7", "thứ bẩy", "chủ nhật", "cuối tuần", "ngày nghỉ", "lịch làm việc", "ngày làm việc"];
+      const foundKeywords = weekendKeywords.filter(k => originalQuestion.includes(k));
+      if (foundKeywords.length > 0) {
+        query = `${query} ${foundKeywords.join(" ")}`;
+      }
       
       const limit = context.topK || 5;
       const isAdmin = context.isAdmin !== false; // default to false if not admin, for maximum safety

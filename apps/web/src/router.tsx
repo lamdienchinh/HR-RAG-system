@@ -1,10 +1,10 @@
-import { createRootRoute, createRoute, createRouter, redirect } from '@tanstack/react-router';
+import { createRootRoute, createRoute, createRouter, redirect } from "@tanstack/react-router";
 
-import App from './App';
-import { ChatPage } from './pages/ChatPage';
-import { LoginPage } from './pages/LoginPage';
-import { PolicyDashboardPage } from './pages/PolicyDashboardPage';
-import { PolicyViewPage } from './pages/PolicyViewPage';
+import App from "./App";
+import { ChatPage } from "./pages/ChatPage";
+import { LoginPage } from "./pages/LoginPage";
+import { PolicyDashboardPage } from "./pages/PolicyDashboardPage";
+import { PolicyViewPage } from "./pages/PolicyViewPage";
 
 const rootRoute = createRootRoute({
   component: App,
@@ -12,30 +12,32 @@ const rootRoute = createRootRoute({
 
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/login',
+  path: "/login",
   component: LoginPage,
 });
 
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/',
+  path: "/",
   component: ChatPage,
 });
 
 const policiesRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/policies',
+  path: "/policies",
   beforeLoad: () => {
-    const token = localStorage.getItem('rag-demo-token');
+    const token = localStorage.getItem("rag-demo-token");
     let isAdmin = false;
     try {
       if (token) {
-        const payload = JSON.parse(atob(token.split('.')[1])) as { role?: string };
-        isAdmin = payload.role === 'admin';
+        const payload = JSON.parse(atob(token.split(".")[1])) as { role?: string };
+        isAdmin = payload.role === "admin";
       }
-    } catch { /* malformed token */ }
+    } catch {
+      /* malformed token */
+    }
     if (!isAdmin) {
-      throw redirect({ to: '/' });
+      throw redirect({ to: "/" });
     }
   },
   component: PolicyDashboardPage,
@@ -43,7 +45,7 @@ const policiesRoute = createRoute({
 
 const policyViewRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/policies/view/$policyId',
+  path: "/policies/view/$policyId",
   component: () => <PolicyViewPage />,
 });
 
@@ -51,7 +53,7 @@ const routeTree = rootRoute.addChildren([loginRoute, indexRoute, policiesRoute, 
 
 export const router = createRouter({ routeTree });
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface Register {
     router: typeof router;
   }

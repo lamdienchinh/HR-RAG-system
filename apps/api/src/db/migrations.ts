@@ -1,7 +1,7 @@
-import { pool } from './pool.js';
+import { pool } from "./pool.js";
 
 export const runMigrations = async (): Promise<void> => {
-  await pool.query('CREATE EXTENSION IF NOT EXISTS vector');
+  await pool.query("CREATE EXTENSION IF NOT EXISTS vector");
   await pool.query(`
     CREATE TABLE IF NOT EXISTS policies (
       id TEXT PRIMARY KEY,
@@ -69,8 +69,12 @@ export const runMigrations = async (): Promise<void> => {
     CREATE INDEX IF NOT EXISTS document_chunks_embedding_hnsw
     ON document_chunks USING hnsw (embedding vector_cosine_ops)
   `);
-  await pool.query('CREATE INDEX IF NOT EXISTS document_chunks_policy_id_idx ON document_chunks(policy_id)');
-  await pool.query('CREATE INDEX IF NOT EXISTS document_chunks_tsv_gin ON document_chunks USING gin(tsv)');
+  await pool.query(
+    "CREATE INDEX IF NOT EXISTS document_chunks_policy_id_idx ON document_chunks(policy_id)",
+  );
+  await pool.query(
+    "CREATE INDEX IF NOT EXISTS document_chunks_tsv_gin ON document_chunks USING gin(tsv)",
+  );
 
   // Conversation tables
   await pool.query(`
@@ -91,11 +95,13 @@ export const runMigrations = async (): Promise<void> => {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     )
   `);
-  await pool.query('CREATE INDEX IF NOT EXISTS chat_messages_conv_idx ON chat_messages(conversation_id, created_at)');
+  await pool.query(
+    "CREATE INDEX IF NOT EXISTS chat_messages_conv_idx ON chat_messages(conversation_id, created_at)",
+  );
 
   // Removed: conversation_chunks table — conversation history is now passed
   // directly via chat_messages → Gemini prompt (no vector embedding needed).
-  await pool.query('DROP TABLE IF EXISTS conversation_chunks');
+  await pool.query("DROP TABLE IF EXISTS conversation_chunks");
 
   // Add citations column if missing
   await pool.query(`
@@ -156,5 +162,4 @@ export const runMigrations = async (): Promise<void> => {
       END IF;
     END $$
   `);
-
 };

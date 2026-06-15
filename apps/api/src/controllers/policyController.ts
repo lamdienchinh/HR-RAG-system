@@ -1,9 +1,5 @@
 import { type Request, type Response } from "express";
-import {
-  type Locale,
-  getPresetQuestions,
-  getSeedPolicies,
-} from "../lib/seedData.js";
+import { type Locale, getPresetQuestions, getSeedPolicies } from "../lib/seedData.js";
 import {
   createPolicy,
   deletePolicy,
@@ -32,8 +28,8 @@ export const getModels = async (_request: Request, response: Response) => {
     const { config } = await import("../config.js");
     const apiResponse = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(
-        config.geminiApiKey ?? ""
-      )}`
+        config.geminiApiKey ?? "",
+      )}`,
     );
     if (!apiResponse.ok) {
       response.json({ models: ["gemini-2.5-flash"] });
@@ -51,7 +47,7 @@ export const getModels = async (_request: Request, response: Response) => {
       .filter(
         (m) =>
           (m.startsWith("gemini-") || m.startsWith("gemma-")) &&
-          !/(embedding|imagen|image|tts|robotics|live)/i.test(m)
+          !/(embedding|imagen|image|tts|robotics|live)/i.test(m),
       )
       .sort((a, b) => {
         const score = (m: string): number => {
@@ -80,7 +76,7 @@ export const getPoliciesList = async (request: Request, response: Response) => {
 
 export const createNewPolicy = async (
   request: Request<Record<string, never>, unknown, CreatePolicyBody>,
-  response: Response
+  response: Response,
 ) => {
   try {
     const policy = await createPolicy(parseCreatePolicyBody(request.body));
@@ -104,10 +100,7 @@ export const getPolicyById = async (request: Request, response: Response) => {
   response.json({ policy });
 };
 
-export const updatePolicyById = async (
-  request: Request,
-  response: Response
-) => {
+export const updatePolicyById = async (request: Request, response: Response) => {
   try {
     const body = parseUpdatePolicyBody(request.body);
     const id = request.params.id as string;
@@ -118,10 +111,7 @@ export const updatePolicyById = async (
   }
 };
 
-export const deletePolicyById = async (
-  request: Request,
-  response: Response
-) => {
+export const deletePolicyById = async (request: Request, response: Response) => {
   try {
     await deletePolicy(request.params.id as string);
     response.status(204).end();
@@ -130,50 +120,35 @@ export const deletePolicyById = async (
   }
 };
 
-export const patchPolicyStatus = async (
-  request: Request,
-  response: Response
-) => {
+export const patchPolicyStatus = async (request: Request, response: Response) => {
   try {
     const status = (request.body as { status?: string })?.status;
     if (typeof status !== "string") {
       sendError(response, new Error("Missing required field: status"));
       return;
     }
-    const policy = await updatePolicyStatus(
-      request.params.id as string,
-      status
-    );
+    const policy = await updatePolicyStatus(request.params.id as string, status);
     response.json({ policy });
   } catch (error) {
     sendError(response, error);
   }
 };
 
-export const patchPolicyPrivacy = async (
-  request: Request,
-  response: Response
-) => {
+export const patchPolicyPrivacy = async (request: Request, response: Response) => {
   try {
     const isPrivate = (request.body as { isPrivate?: unknown })?.isPrivate;
     if (typeof isPrivate !== "boolean") {
       sendError(response, new Error("isPrivate (boolean) is required"));
       return;
     }
-    const policy = await togglePolicyPrivacy(
-      request.params.id as string,
-      isPrivate
-    );
+    const policy = await togglePolicyPrivacy(request.params.id as string, isPrivate);
     response.json({ policy });
   } catch (error) {
     sendError(response, error);
   }
 };
 
-export const reindexAllPolicies = async (
-  _request: Request,
-  response: Response
-) => {
+export const reindexAllPolicies = async (_request: Request, response: Response) => {
   response.json(await reindexPolicies());
 };
 
@@ -184,8 +159,6 @@ export const reseedPolicies = async (request: Request, response: Response) => {
     const result = await reindexPolicies();
     response.json({ ...result, locale });
   } catch (error) {
-    response
-      .status(500)
-      .json({ error: error instanceof Error ? error.message : String(error) });
+    response.status(500).json({ error: error instanceof Error ? error.message : String(error) });
   }
 };

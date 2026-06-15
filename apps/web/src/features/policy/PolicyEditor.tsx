@@ -1,20 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  DatabaseZap,
-  Loader2,
-  PencilLine,
-  PlusCircle,
-  RefreshCw,
-  Trash2,
-} from "lucide-react";
+import { DatabaseZap, Loader2, PencilLine, PlusCircle, RefreshCw, Trash2 } from "lucide-react";
 import MDEditor from "@uiw/react-md-editor";
 
-import {
-  reindexPolicies,
-  updatePolicy,
-  deletePolicy,
-  updatePolicyStatus,
-} from "../../apis/api";
+import { reindexPolicies, updatePolicy, deletePolicy, updatePolicyStatus } from "../../apis/api";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import type { Policy } from "../../types";
@@ -24,9 +12,7 @@ const incidentRule =
   "Công việc khẩn cấp ảnh hưởng khách hàng có thể được phê duyệt bổ sung trong 24 giờ khi người chỉ huy sự cố ghi nhận nhân viên vào nhật ký sự cố và quản lý xác nhận giờ làm.";
 
 const createEmergencyRetroApprovalText = (content: string): string =>
-  content.includes(incidentRule)
-    ? content
-    : `${content.trim()}\n\n${incidentRule}`;
+  content.includes(incidentRule) ? content : `${content.trim()}\n\n${incidentRule}`;
 
 export const PolicyEditor = ({
   policies,
@@ -121,9 +107,7 @@ export const PolicyEditor = ({
   };
 
   const handleCatch = (error: unknown): void => {
-    onStatusMessageChange(
-      error instanceof Error ? error.message : String(error),
-    );
+    onStatusMessageChange(error instanceof Error ? error.message : String(error));
   };
 
   return (
@@ -171,10 +155,7 @@ export const PolicyEditor = ({
         </div>
       </div>
 
-      <div
-        className="min-h-0 flex-1 overflow-hidden p-5"
-        data-color-mode="light"
-      >
+      <div className="min-h-0 flex-1 overflow-hidden p-5" data-color-mode="light">
         <MDEditor
           className="h-full"
           value={draftContent}
@@ -186,9 +167,7 @@ export const PolicyEditor = ({
       </div>
 
       <div className="flex shrink-0 flex-col gap-2 border-t border-slate-100 px-5 py-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="min-w-0 truncate text-xs text-slate-500">
-          {statusMessage}
-        </div>
+        <div className="min-w-0 truncate text-xs text-slate-500">{statusMessage}</div>
         <div className="flex flex-wrap gap-2">
           <Button
             type="button"
@@ -209,9 +188,7 @@ export const PolicyEditor = ({
             variant="secondary"
             size="sm"
             disabled={!selectedPolicy || isBusy}
-            onClick={() =>
-              onDraftChange(createEmergencyRetroApprovalText(draftContent))
-            }
+            onClick={() => onDraftChange(createEmergencyRetroApprovalText(draftContent))}
           >
             <PlusCircle className="size-3.5" /> {T.incidentRule}
           </Button>

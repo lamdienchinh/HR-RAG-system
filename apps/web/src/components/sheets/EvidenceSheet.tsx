@@ -1,22 +1,10 @@
-import {
-  AlertCircle,
-  CheckCircle2,
-  FileText,
-  ShieldCheck,
-  XCircle,
-} from "lucide-react";
+import { AlertCircle, CheckCircle2, FileText, ShieldCheck, XCircle } from "lucide-react";
 
 import type { AskResult, RetrievedChunk } from "../../types";
 import type { EvidenceEvent } from "../../apis/api";
 import { T } from "../../vi";
 import { Badge } from "../ui/badge";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetBody,
-} from "../ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetBody } from "../ui/sheet";
 
 const formatScore = (score: number): string => `${Math.round(score * 100)}%`;
 
@@ -63,10 +51,8 @@ export const EvidenceSheet = ({
   minScore,
 }: EvidenceSheetProps) => {
   const citations = activeResult?.citations ?? activeEvidence?.citations ?? [];
-  const retrievedChunks =
-    activeResult?.retrievedChunks ?? activeEvidence?.retrievedChunks ?? [];
-  const externalSources =
-    activeResult?.externalSources ?? activeEvidence?.externalSources ?? [];
+  const retrievedChunks = activeResult?.retrievedChunks ?? activeEvidence?.retrievedChunks ?? [];
+  const externalSources = activeResult?.externalSources ?? activeEvidence?.externalSources ?? [];
   const bestScore = retrievedChunks[0]?.score ?? null;
   const gatePassed = bestScore !== null && bestScore >= minScore;
   const blocked = bestScore !== null && !gatePassed;
@@ -99,9 +85,7 @@ export const EvidenceSheet = ({
           {/* Gate status */}
           <div className="mb-4 grid grid-cols-2 gap-2 text-xs">
             <div className="rounded-xl bg-slate-100 p-2.5">
-              <div className="font-semibold text-slate-500">
-                {T.highestScore}
-              </div>
+              <div className="font-semibold text-slate-500">{T.highestScore}</div>
               <div className="mt-0.5 text-lg font-black text-slate-950">
                 {bestScore === null ? "N/A" : formatScore(bestScore)}
               </div>
@@ -138,9 +122,7 @@ export const EvidenceSheet = ({
           {/* Citations */}
           {citations.length > 0 ? (
             <div className="space-y-2">
-              <div className="text-xs font-bold text-slate-950">
-                {T.policyCitations}
-              </div>
+              <div className="text-xs font-bold text-slate-950">{T.policyCitations}</div>
               {citations.map((chunk, index) => (
                 <SourceCard key={chunk.id} chunk={chunk} index={index} />
               ))}
@@ -155,9 +137,7 @@ export const EvidenceSheet = ({
           {/* External sources */}
           {externalSources.length > 0 && (
             <div className="mt-4 space-y-2">
-              <div className="text-xs font-bold text-slate-950">
-                {T.externalSources}
-              </div>
+              <div className="text-xs font-bold text-slate-950">{T.externalSources}</div>
               {externalSources.map((source, index) => (
                 <a
                   key={`${source.uri}-${index}`}
@@ -169,9 +149,7 @@ export const EvidenceSheet = ({
                   <div className="text-xs font-bold text-amber-950">
                     W{index + 1}. {source.title}
                   </div>
-                  <div className="mt-0.5 break-all text-[10px] text-amber-700">
-                    {source.uri}
-                  </div>
+                  <div className="mt-0.5 break-all text-[10px] text-amber-700">{source.uri}</div>
                 </a>
               ))}
             </div>

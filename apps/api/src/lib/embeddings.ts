@@ -1,21 +1,25 @@
-import { createHash } from 'node:crypto';
-import { pipeline, type FeatureExtractionPipeline } from '@huggingface/transformers';
-import { GoogleGenAI } from '@google/genai';
-import { config } from '../config.js';
+import { createHash } from "node:crypto";
+import { pipeline, type FeatureExtractionPipeline } from "@huggingface/transformers";
+import { GoogleGenAI } from "@google/genai";
+import { config } from "../config.js";
 
 export const vectorDimensions = 384;
-const modelId = 'Xenova/paraphrase-multilingual-MiniLM-L12-v2';
+const modelId = "Xenova/paraphrase-multilingual-MiniLM-L12-v2";
 let extractor: FeatureExtractionPipeline | null = null;
 
 // Embedding cache: hash(text) → { vector, timestamp }
-const embeddingCache = new Map<string, { readonly vector: readonly number[]; readonly ts: number }>();
+const embeddingCache = new Map<
+  string,
+  { readonly vector: readonly number[]; readonly ts: number }
+>();
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const MAX_CACHE_SIZE = 2000;
 
 /**
  * Generates a short sha256 hash for cache keying.
  */
-const hashText = (text: string): string => createHash('sha256').update(text).digest('hex').slice(0, 16);
+const hashText = (text: string): string =>
+  createHash("sha256").update(text).digest("hex").slice(0, 16);
 
 /**
  * Evicts expired entries and keeps the cache size within limits.
@@ -38,8 +42,8 @@ const evictExpired = (): void => {
  */
 const getExtractor = async (): Promise<FeatureExtractionPipeline> => {
   if (!extractor) {
-    extractor = await pipeline('feature-extraction', modelId, {
-      dtype: 'q8', // Quantized 8-bit model for high-speed CPU inference
+    extractor = await pipeline("feature-extraction", modelId, {
+      dtype: "q8", // Quantized 8-bit model for high-speed CPU inference
     });
   }
   return extractor;
@@ -50,11 +54,11 @@ const getExtractor = async (): Promise<FeatureExtractionPipeline> => {
  */
 export const embedText = async (
   text: string,
-  provider: "local" | "cloud" = "local"
+  provider: "local" | "cloud" = "local",
 ): Promise<readonly number[]> => {
   const key = `${provider}:${hashText(text)}`;
   const cached = embeddingCache.get(key);
-  if (cached && (Date.now() - cached.ts) < CACHE_TTL_MS) return cached.vector;
+  if (cached && Date.now() - cached.ts < CACHE_TTL_MS) return cached.vector;
 
   let vector: number[];
 
@@ -70,7 +74,7 @@ export const embedText = async (
         outputDimensionality: vectorDimensions,
       },
     });
-    
+
     const values = response.embeddings?.[0]?.values;
     if (!values || values.length === 0) {
       throw new Error("Failed to generate cloud embedding values");
@@ -78,7 +82,7 @@ export const embedText = async (
     vector = Array.from(values);
   } else {
     const model = await getExtractor();
-    const output = await model(text, { pooling: 'mean', normalize: true });
+    const output = await model(text, { pooling: "mean", normalize: true });
     vector = Array.from(output.data as Float32Array).slice(0, vectorDimensions);
   }
 
@@ -92,7 +96,7 @@ export const embedText = async (
  */
 export const embedTexts = async (
   texts: readonly string[],
-  provider: "local" | "cloud" = "local"
+  provider: "local" | "cloud" = "local",
 ): Promise<readonly (readonly number[])[]> => {
   if (provider === "cloud") {
     if (!config.geminiApiKey) {
@@ -108,7 +112,7 @@ export const embedTexts = async (
       const key = `cloud:${hashText(text)}`;
       const cached = embeddingCache.get(key);
 
-      if (cached && (Date.now() - cached.ts) < CACHE_TTL_MS) {
+      if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
         results[i] = cached.vector;
       } else {
         uncachedIndices.push(i);
@@ -157,7 +161,7 @@ export const embedTexts = async (
     const key = `local:${hashText(text)}`;
     const cached = embeddingCache.get(key);
 
-    if (cached && (Date.now() - cached.ts) < CACHE_TTL_MS) {
+    if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
       results[i] = cached.vector;
     } else {
       uncachedIndices.push(i);
@@ -166,7 +170,10 @@ export const embedTexts = async (
   }
 
   if (uncachedTexts.length > 0) {
-    const output = await model(uncachedTexts, { pooling: 'mean', normalize: true });
+    const output = await model(uncachedTexts, {
+      pooling: "mean",
+      normalize: true,
+    });
     const flatData = output.data as Float32Array;
 
     for (let i = 0; i < uncachedTexts.length; i++) {
@@ -186,4 +193,4 @@ export const embedTexts = async (
   return results;
 };
 
-export const toPgVector = (vector: readonly number[]): string => `[${vector.join(',')}]`;
+export const toPgVector = (vector: readonly number[]): string => `[${vector.join(",")}]`;

@@ -49,9 +49,7 @@ export const cleanDocumentText = (content: string): string => {
   if (!content) return "";
 
   // 1. Convert \r\n to \n and remove hidden control characters (except tab and newline)
-  const cleaned = content
-    .replace(/\r\n/g, "\n")
-    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "");
+  const cleaned = content.replace(/\r\n/g, "\n").replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "");
 
   // 2. Process line-by-line: trim, collapse internal spacing, remove dividers
   const lines = cleaned.split("\n");
@@ -61,9 +59,10 @@ export const cleanDocumentText = (content: string): string => {
     const trimmedLine = line.trim();
 
     // Skip decorative markdown divider lines (e.g., ---, ***, ___ or with spaces)
-    const isDivider = /^[ \t]*[-*_ \t]{3,}[ \t]*$/.test(trimmedLine) &&
-                      (trimmedLine.includes("-") || trimmedLine.includes("*") || trimmedLine.includes("_"));
-    
+    const isDivider =
+      /^[ \t]*[-*_ \t]{3,}[ \t]*$/.test(trimmedLine) &&
+      (trimmedLine.includes("-") || trimmedLine.includes("*") || trimmedLine.includes("_"));
+
     if (isDivider) {
       continue;
     }
@@ -80,9 +79,7 @@ export const cleanDocumentText = (content: string): string => {
     .trim();
 };
 
-const parseHierarchicalSections = (
-  content: string,
-): readonly HierarchicalSection[] => {
+const parseHierarchicalSections = (content: string): readonly HierarchicalSection[] => {
   // 1. ADVANCED TEXT SANITIZATION & NORMALIZATION:
   const normalizedContent = cleanDocumentText(content);
 
@@ -98,9 +95,7 @@ const parseHierarchicalSections = (
   const saveCurrentSection = () => {
     if (currentContent.length > 0) {
       // Filter out any undefined or empty heading slots before saving
-      const headingsPath = currentHeadings.filter(
-        (h) => h !== undefined && h !== "",
-      );
+      const headingsPath = currentHeadings.filter((h) => h !== undefined && h !== "");
       sections.push({
         headings: headingsPath,
         content: currentContent.join("\n").trim(),
@@ -227,14 +222,11 @@ const mergeParts = (
     // PRE-SPLIT VERIFICATION: If an individual fragment is larger than maxLen,
     // we must recursively split it first before running the merging pipeline.
     const processedParts =
-      trimmedPart.length > maxLen
-        ? recursiveSplit(trimmedPart, maxLen)
-        : [trimmedPart];
+      trimmedPart.length > maxLen ? recursiveSplit(trimmedPart, maxLen) : [trimmedPart];
 
     for (const subPart of processedParts) {
       // Calculate the candidate length if this sub-part is merged into the active buffer
-      const candidate =
-        buffer.length > 0 ? `${buffer}${separator}${subPart}` : subPart;
+      const candidate = buffer.length > 0 ? `${buffer}${separator}${subPart}` : subPart;
 
       if (candidate.length <= maxLen) {
         buffer = candidate; // Fits within limit -> merge into the buffer
@@ -287,8 +279,7 @@ const getOverlapText = (text: string, numSentences: number): string => {
   return sentences.slice(-numSentences).join(" ");
 };
 
-const padChunkNumber = (chunkIndex: number): string =>
-  String(chunkIndex + 1).padStart(3, "0");
+const padChunkNumber = (chunkIndex: number): string => String(chunkIndex + 1).padStart(3, "0");
 
 /**
  * MAIN FUNCTION: POLICY DOCUMENT CHUNKER (ORCHESTRATOR)
@@ -320,9 +311,7 @@ const padChunkNumber = (chunkIndex: number): string =>
  *      }
  *    ]
  */
-export const createPolicyChunks = (
-  policies: readonly Policy[],
-): readonly ChunkRecord[] =>
+export const createPolicyChunks = (policies: readonly Policy[]): readonly ChunkRecord[] =>
   policies.flatMap((policy) => {
     // Step 1: Parse the document into hierarchical sections
     const sections = parseHierarchicalSections(policy.content);
@@ -339,16 +328,14 @@ export const createPolicyChunks = (
       // Dynamically calculate the maximum length left for the raw content.
       // This guarantees that after assembling (Heading + Overlap + Content + Newlines),
       // the total chunk size NEVER exceeds MAX_CHUNK_SIZE (damped by an 8-character buffer).
-      let effectiveMaxLen =
-        MAX_CHUNK_SIZE - headingContext.length - overlapBudget - 8;
+      let effectiveMaxLen = MAX_CHUNK_SIZE - headingContext.length - overlapBudget - 8;
 
       // FALLBACK PRECAUTION: If heading hierarchy is extremely long, effectiveMaxLen becomes too small,
       // causing the core content to get fragmented into micro-chunks.
       // Solution: Fall back to using only the deepest heading, leaving at least 200 characters for content.
       if (effectiveMaxLen < 200 && section.headings.length > 0) {
         headingContext = section.headings[section.headings.length - 1];
-        effectiveMaxLen =
-          MAX_CHUNK_SIZE - headingContext.length - overlapBudget - 8;
+        effectiveMaxLen = MAX_CHUNK_SIZE - headingContext.length - overlapBudget - 8;
       }
 
       // Enforce a hard floor of 100 characters to prevent micro-chunks
@@ -362,9 +349,7 @@ export const createPolicyChunks = (
         // Extract overlap strictly from the raw content of the previous chunk (rawContentChunks[index - 1]).
         // This ensures heading markers (# Headings) of the previous chunk never leak into the overlap of the next chunk.
         const overlap =
-          index > 0
-            ? getOverlapText(rawContentChunks[index - 1], OVERLAP_SENTENCES)
-            : "";
+          index > 0 ? getOverlapText(rawContentChunks[index - 1], OVERLAP_SENTENCES) : "";
 
         let finalContent = chunkContent.trim();
 

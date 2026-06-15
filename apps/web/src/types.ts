@@ -36,7 +36,7 @@ export interface ExternalSource {
 export interface AskResult {
   readonly question: string;
   readonly answer: string;
-  readonly mode: 'gemini' | 'conversation-recall';
+  readonly mode: "gemini" | "conversation-recall";
   readonly model: string;
   readonly warning: string | null;
   readonly citations: readonly RetrievedChunk[];

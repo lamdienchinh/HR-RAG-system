@@ -62,7 +62,9 @@ export const AuthProvider = ({ children }: { readonly children: ReactNode }) => 
       body: JSON.stringify({ username, password }),
     });
     if (!res.ok) {
-      const body = await res.json().catch(() => ({ error: "Login failed" })) as { error?: string };
+      const body = (await res.json().catch(() => ({ error: "Login failed" }))) as {
+        error?: string;
+      };
       throw new Error(body.error ?? "Login failed");
     }
     const data = (await res.json()) as { token: string; user: AuthUser };

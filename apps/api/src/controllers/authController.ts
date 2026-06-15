@@ -1,9 +1,5 @@
 import { type Request, type Response } from "express";
-import {
-  findUserByUsername,
-  verifyPassword,
-  generateToken,
-} from "../lib/auth.js";
+import { findUserByUsername, verifyPassword, generateToken } from "../lib/auth.js";
 import { sendError } from "../helpers/apiHelpers.js";
 
 export const login = async (request: Request, response: Response) => {

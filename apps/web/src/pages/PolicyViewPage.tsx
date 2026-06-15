@@ -58,9 +58,7 @@ export const PolicyViewPage = () => {
               <FileText className="size-5" />
             </div>
             <div className="min-w-0 flex-1">
-              <h1 className="text-xl font-bold text-slate-900">
-                {policy.title}
-              </h1>
+              <h1 className="text-xl font-bold text-slate-900">{policy.title}</h1>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <Badge
                   className={`text-xs ${policy.status === "current" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}
@@ -71,9 +69,7 @@ export const PolicyViewPage = () => {
                   <Layers className="size-3" />
                   {policy.category}
                 </span>
-                <span className="text-xs text-slate-400">
-                  v{policy.version}
-                </span>
+                <span className="text-xs text-slate-400">v{policy.version}</span>
                 <span className="flex items-center gap-1 text-xs text-slate-500">
                   <Calendar className="size-3" />
                   {new Date(policy.updatedAt).toLocaleDateString("vi-VN")}

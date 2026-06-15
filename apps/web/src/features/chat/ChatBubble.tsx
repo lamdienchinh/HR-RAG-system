@@ -15,17 +15,13 @@ export const ChatBubble = ({
   const citations = message.citations;
   const showStreaming = isStreaming && isAssistant;
 
-  const usedCitationNums = isAssistant
-    ? extractUsedCitations(message.content)
-    : [];
+  const usedCitationNums = isAssistant ? extractUsedCitations(message.content) : [];
   const usedCitations = usedCitationNums
     .map((n) => ({ n, ref: citations?.[n - 1] }))
     .filter((item): item is { n: number; ref: CitationRef } => !!item.ref);
 
   return (
-    <article
-      className={`flex items-start gap-3 ${isAssistant ? "" : "flex-row-reverse"}`}
-    >
+    <article className={`flex items-start gap-3 ${isAssistant ? "" : "flex-row-reverse"}`}>
       <div
         className={`mt-0.5 grid size-8 shrink-0 place-items-center rounded-full ${
           isAssistant
@@ -41,15 +37,11 @@ export const ChatBubble = ({
         {(message.content.length > 0 || showStreaming) && (
           <div
             className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-              isAssistant
-                ? "bg-white shadow-sm ring-1 ring-slate-100"
-                : "bg-slate-900 text-white"
+              isAssistant ? "bg-white shadow-sm ring-1 ring-slate-100" : "bg-slate-900 text-white"
             }`}
           >
             {isAssistant ? (
-              <div
-                className={`chat-markdown${showStreaming ? " streaming" : ""}`}
-              >
+              <div className={`chat-markdown${showStreaming ? " streaming" : ""}`}>
                 {message.content.length > 0 ? (
                   <Markdown>{message.content}</Markdown>
                 ) : (
@@ -73,9 +65,7 @@ export const ChatBubble = ({
 
             const groupedCitations: GroupedCitation[] = [];
             for (const item of usedCitations) {
-              const existing = groupedCitations.find(
-                (g) => g.policyId === item.ref.policyId,
-              );
+              const existing = groupedCitations.find((g) => g.policyId === item.ref.policyId);
               if (existing) {
                 if (!existing.nums.includes(item.n)) {
                   (existing.nums as number[]).push(item.n);
@@ -112,12 +102,8 @@ export const ChatBubble = ({
                         rel="noopener noreferrer"
                         title={`${group.title} (v${group.version})`}
                       >
-                        <span className="citation-badge text-nowrap">
-                          {badgeLabel}
-                        </span>
-                        <span className="truncate font-medium">
-                          {group.title}
-                        </span>
+                        <span className="citation-badge text-nowrap">{badgeLabel}</span>
+                        <span className="truncate font-medium">{group.title}</span>
                         <span className="text-slate-400">v{group.version}</span>
                       </a>
                     );

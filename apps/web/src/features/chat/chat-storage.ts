@@ -14,8 +14,7 @@ export const createWelcomeMessage = (content: string): ChatMessage => ({
   content,
 });
 
-export const createMessageId = (): string =>
-  `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+export const createMessageId = (): string => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
 export const readStoredMessages = (welcomeText: string, userId: string): readonly ChatMessage[] => {
   const storedValue = window.localStorage.getItem(getChatStorageKey(userId));
@@ -58,13 +57,15 @@ export const readStoredMessages = (welcomeText: string, userId: string): readonl
 export const persistMessages = (messages: readonly ChatMessage[], userId: string): void => {
   window.localStorage.setItem(
     getChatStorageKey(userId),
-    JSON.stringify(messages.map((m) => ({
-      id: m.id,
-      role: m.role,
-      content: m.content,
-      isError: m.isError === true,
-      citations: m.citations,
-    }))),
+    JSON.stringify(
+      messages.map((m) => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        isError: m.isError === true,
+        citations: m.citations,
+      })),
+    ),
   );
 };
 

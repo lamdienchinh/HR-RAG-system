@@ -1,5 +1,5 @@
 import { Type } from "@google/genai";
-import { retrieveChunks } from "../reindex.js";
+import { retrieveChunks } from "../retrieval.js";
 
 // ========================================================
 // 1. TOOL DECLARATIONS (OpenAPI schemas for Gemini)
@@ -7,13 +7,15 @@ import { retrieveChunks } from "../reindex.js";
 
 export const searchHrPoliciesTool = {
   name: "search_hr_policies",
-  description: "Tìm kiếm thông tin từ bộ chính sách nhân sự chính thức của công ty để trả lời câu hỏi.",
+  description:
+    "Tìm kiếm thông tin từ bộ chính sách nhân sự chính thức của công ty để trả lời câu hỏi.",
   parameters: {
     type: Type.OBJECT,
     properties: {
       query: {
         type: Type.STRING,
-        description: "Từ khóa hoặc cụm từ tìm kiếm (ví dụ: 'nghỉ phép', 'phụ cấp ăn trưa', 'trang phục').",
+        description:
+          "Từ khóa hoặc cụm từ tìm kiếm (ví dụ: 'nghỉ phép', 'phụ cấp ăn trưa', 'trang phục').",
       },
     },
     required: ["query"],
@@ -22,7 +24,8 @@ export const searchHrPoliciesTool = {
 
 export const getCurrentDateTool = {
   name: "get_current_date",
-  description: "Lấy thông tin ngày giờ hệ thống hiện tại để đối chiếu mốc thời gian (hôm nay, ngày mai, năm ngoái, hết hạn).",
+  description:
+    "Lấy thông tin ngày giờ hệ thống hiện tại để đối chiếu mốc thời gian (hôm nay, ngày mai, năm ngoái, hết hạn).",
   parameters: {
     type: Type.OBJECT,
     properties: {},
@@ -31,7 +34,8 @@ export const getCurrentDateTool = {
 
 export const calculateLeaveBalanceTool = {
   name: "calculate_leave_balance",
-  description: "Tra cứu số ngày phép năm còn lại của CHÍNH nhân viên đang trò chuyện (gọi hàm không cần bất kỳ tham số nào).",
+  description:
+    "Tra cứu số ngày phép năm còn lại của CHÍNH nhân viên đang trò chuyện (gọi hàm không cần bất kỳ tham số nào).",
   parameters: {
     type: Type.OBJECT,
     properties: {},
@@ -40,7 +44,7 @@ export const calculateLeaveBalanceTool = {
 
 // Gộp tất cả các Declarations lại để truyền vào config.tools của Gemini
 export const agentToolsDeclarations = [
-  { functionDeclarations: [searchHrPoliciesTool, getCurrentDateTool, calculateLeaveBalanceTool] }
+  { functionDeclarations: [searchHrPoliciesTool, getCurrentDateTool, calculateLeaveBalanceTool] },
 ];
 
 // ========================================================
@@ -57,31 +61,36 @@ export interface ToolContext {
   readonly originalQuestion?: string;
 }
 
-export const executeTool = async (
-  name: string,
-  args: any,
-  context: ToolContext
-): Promise<any> => {
+export const executeTool = async (name: string, args: any, context: ToolContext): Promise<any> => {
   switch (name) {
     case "search_hr_policies": {
       let query = args.query as string;
       if (!query) throw new Error("Missing required 'query' argument");
-      
+
       const originalQuestion = context.originalQuestion?.toLowerCase() || "";
-      const weekendKeywords = ["thứ bảy", "thứ 7", "thứ bẩy", "chủ nhật", "cuối tuần", "ngày nghỉ", "lịch làm việc", "ngày làm việc"];
-      const foundKeywords = weekendKeywords.filter(k => originalQuestion.includes(k));
+      const weekendKeywords = [
+        "thứ bảy",
+        "thứ 7",
+        "thứ bẩy",
+        "chủ nhật",
+        "cuối tuần",
+        "ngày nghỉ",
+        "lịch làm việc",
+        "ngày làm việc",
+      ];
+      const foundKeywords = weekendKeywords.filter((k) => originalQuestion.includes(k));
       if (foundKeywords.length > 0) {
         query = `${query} ${foundKeywords.join(" ")}`;
       }
-      
+
       const limit = context.topK || 5;
       const isAdmin = context.isAdmin !== false; // default to false if not admin, for maximum safety
-      
+
       const result = await retrieveChunks(query, limit, isAdmin, {
         skipReranker: context.skipReranker,
         embeddingProvider: context.embeddingProvider,
       });
-      
+
       // Filter chunks by minScore
       const minScore = context.minScore ?? 0.05;
       const filteredChunks = result.chunks.filter((c) => c.score >= minScore);
@@ -113,14 +122,22 @@ export const executeTool = async (
       // Bảo mật tuyệt đối: Luôn tra cứu dựa trên tài khoản đang đăng nhập (currentUserId)
       // tuyệt đối không lấy từ tham số do LLM truyền vào tự do.
       const employeeId = context.currentUserId || "user-employee";
-      
+
       // Giả lập cơ sở dữ liệu tra cứu phép năm của nhân viên (khớp với ID thực tế từ seed)
-      const mockDatabase: Record<string, { name: string; total: number; used: number; remaining: number }> = {
+      const mockDatabase: Record<
+        string,
+        { name: string; total: number; used: number; remaining: number }
+      > = {
         "user-employee": { name: "Nguyễn Văn A", total: 18, used: 6, remaining: 12 },
         "user-admin": { name: "Quản trị viên", total: 18, used: 0, remaining: 18 },
       };
 
-      const record = mockDatabase[employeeId] || { name: "Nhân viên mới", total: 18, used: 0, remaining: 18 };
+      const record = mockDatabase[employeeId] || {
+        name: "Nhân viên mới",
+        total: 18,
+        used: 0,
+        remaining: 18,
+      };
       return {
         employeeId,
         employeeName: record.name,

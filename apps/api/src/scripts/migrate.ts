@@ -1,9 +1,9 @@
-import { closePool } from '../db/pool.js';
-import { runMigrations } from '../db/migrations.js';
+import { closePool } from "../db/pool.js";
+import { runMigrations } from "../db/migrations.js";
 
 const main = async (): Promise<void> => {
   await runMigrations();
-  console.log('Migrations completed');
+  console.log("Migrations completed");
 };
 
 main()

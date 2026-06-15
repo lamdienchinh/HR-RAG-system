@@ -34,9 +34,7 @@ const composeGeminiPrompt = (
 
   const evidenceBlock =
     chunks.length > 0
-      ? chunks
-          .map((c, i) => `[S${i + 1}] ${c.title} (v${c.version})\n${c.content}`)
-          .join("\n\n")
+      ? chunks.map((c, i) => `[S${i + 1}] ${c.title} (v${c.version})\n${c.content}`).join("\n\n")
       : "(Không tìm thấy bằng chứng từ chính sách)";
 
   return `Bạn là trợ lý chính sách nhân sự (HR Policy Assistant).
@@ -112,13 +110,8 @@ const externalReferencePrefix =
   "Tôi không tìm thấy thông tin này trong dữ liệu chính sách công ty. Tham khảo bên ngoài:";
 
 const normalizeExternalReferenceAnswer = (answer: string): string => {
-  const escapedPrefix = externalReferencePrefix.replace(
-    /[.*+?^${}()|[\]\\]/g,
-    "\\$&",
-  );
-  const withoutRepeatedPrefix = answer
-    .trim()
-    .replace(new RegExp(`^(?:${escapedPrefix}\\s*)+`), "");
+  const escapedPrefix = externalReferencePrefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const withoutRepeatedPrefix = answer.trim().replace(new RegExp(`^(?:${escapedPrefix}\\s*)+`), "");
   return `${externalReferencePrefix}\n${withoutRepeatedPrefix.trim()}`;
 };
 
@@ -187,9 +180,7 @@ const generateWithFallback = async (
   );
 };
 
-const generateExternalReference = async (
-  question: string,
-): Promise<GenerateResult> => {
+const generateExternalReference = async (question: string): Promise<GenerateResult> => {
   const result = await runGeminiWithGrounding(
     composeExternalReferencePrompt(question),
     undefined,
@@ -197,9 +188,7 @@ const generateExternalReference = async (
   );
 
   if (result.externalSources.length === 0) {
-    throw new Error(
-      `Model ${result.model} returned no Google Search grounding sources`,
-    );
+    throw new Error(`Model ${result.model} returned no Google Search grounding sources`);
   }
 
   return {
@@ -258,14 +247,9 @@ export const answerQuestion = async (
   retrievedChunks: readonly RetrievedChunk[],
   options: AnswerOptions,
 ): Promise<AskResult> => {
-  const thresholdedChunks = retrievedChunks.filter(
-    (chunk) => chunk.score >= options.minScore,
-  );
-  const currentChunks = thresholdedChunks.filter(
-    (chunk) => chunk.status === "current",
-  );
-  const answerChunks =
-    currentChunks.length > 0 ? currentChunks : thresholdedChunks;
+  const thresholdedChunks = retrievedChunks.filter((chunk) => chunk.score >= options.minScore);
+  const currentChunks = thresholdedChunks.filter((chunk) => chunk.status === "current");
+  const answerChunks = currentChunks.length > 0 ? currentChunks : thresholdedChunks;
 
   // No chunks at all → try external reference or not found
   if (answerChunks.length === 0) {
@@ -286,12 +270,7 @@ export const answerQuestion = async (
         );
       }
     }
-    return createNotFoundResult(
-      question,
-      retrievedChunks,
-      [],
-      "No policy evidence found.",
-    );
+    return createNotFoundResult(question, retrievedChunks, [], "No policy evidence found.");
   }
 
   // Gemini answer (primary path)
@@ -366,14 +345,9 @@ export const answerQuestionStream = async function* (
   retrievedChunks: readonly RetrievedChunk[],
   options: AnswerStreamOptions,
 ): AsyncGenerator<AnswerStreamEvent> {
-  const thresholdedChunks = retrievedChunks.filter(
-    (chunk) => chunk.score >= options.minScore,
-  );
-  const currentChunks = thresholdedChunks.filter(
-    (chunk) => chunk.status === "current",
-  );
-  const answerChunks =
-    currentChunks.length > 0 ? currentChunks : thresholdedChunks;
+  const thresholdedChunks = retrievedChunks.filter((chunk) => chunk.score >= options.minScore);
+  const currentChunks = thresholdedChunks.filter((chunk) => chunk.status === "current");
+  const answerChunks = currentChunks.length > 0 ? currentChunks : thresholdedChunks;
 
   // No chunks → not found or external reference (no real streaming)
   if (answerChunks.length === 0) {
@@ -404,12 +378,7 @@ export const answerQuestionStream = async function* (
         return;
       }
     }
-    const result = createNotFoundResult(
-      question,
-      retrievedChunks,
-      [],
-      "No policy evidence found.",
-    );
+    const result = createNotFoundResult(question, retrievedChunks, [], "No policy evidence found.");
     yield { type: "token", text: result.answer };
     options.onToken?.(result.answer);
     const { answer: _, ...meta } = result;
@@ -426,19 +395,12 @@ export const answerQuestionStream = async function* (
   );
 
   // Helper: consume a Gemini stream, yield token events, return success flag
-  const streamFromGemini = async function* (
-    useSearch: boolean,
-  ): AsyncGenerator<AnswerStreamEvent> {
+  const streamFromGemini = async function* (useSearch: boolean): AsyncGenerator<AnswerStreamEvent> {
     let collected = "";
     let model = "";
     let externalSources: readonly ExternalSource[] = [];
 
-    const stream = runGeminiWithGroundingStream(
-      prompt,
-      undefined,
-      useSearch,
-      options.geminiModel,
-    );
+    const stream = runGeminiWithGroundingStream(prompt, undefined, useSearch, options.geminiModel);
     for await (const chunk of stream) {
       if (chunk.done) {
         model = chunk.model;

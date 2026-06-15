@@ -1,10 +1,4 @@
-import {
-  AlertCircle,
-  ArrowUp,
-  CheckCircle2,
-  Loader2,
-  MessageSquarePlus,
-} from "lucide-react";
+import { AlertCircle, ArrowUp, CheckCircle2, Loader2, MessageSquarePlus } from "lucide-react";
 
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";

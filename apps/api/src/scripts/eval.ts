@@ -17,7 +17,8 @@ import {
   type GenerationEvalResult,
   type RetrievalEvalResult,
 } from "../lib/eval/rag-eval.js";
-import { reindexPolicies, retrieveChunks } from "../lib/reindex.js";
+import { reindexPolicies } from "../lib/reindex.js";
+import { retrieveChunks } from "../lib/retrieval.js";
 
 const EVAL_MODEL = process.env.EVAL_MODEL || "gemma-4-26b-a4b-it";
 
@@ -47,24 +48,30 @@ const padLeft = (s: string, len: number): string => s.padStart(len);
 const pass = (val: number, threshold: number): boolean => val >= threshold;
 
 const statusIcon = (val: number, threshold: number): string =>
-  pass(val, threshold)
-    ? `${c.green}✅ PASS${c.reset}`
-    : `${c.red}❌ FAIL${c.reset}`;
+  pass(val, threshold) ? `${c.green}✅ PASS${c.reset}` : `${c.red}❌ FAIL${c.reset}`;
 
 const bar = (val: number, threshold?: number, width: number = 24): string => {
   const filled = Math.round(val * width);
   const empty = width - filled;
   // Use threshold-based coloring when provided, otherwise absolute
-  const color = threshold !== undefined
-    ? (val >= threshold ? c.green : val >= threshold * 0.8 ? c.yellow : c.red)
-    : (val >= 0.7 ? c.green : val >= 0.4 ? c.yellow : c.red);
+  const color =
+    threshold !== undefined
+      ? val >= threshold
+        ? c.green
+        : val >= threshold * 0.8
+          ? c.yellow
+          : c.red
+      : val >= 0.7
+        ? c.green
+        : val >= 0.4
+          ? c.yellow
+          : c.red;
   return `${color}${"█".repeat(filled)}${c.dim}${"░".repeat(empty)}${c.reset}`;
 };
 
 const pct = (val: number): string => `${Math.round(val * 100)}%`;
 
-const horizontalLine = (char: string = "─", len: number = 70): string =>
-  char.repeat(len);
+const horizontalLine = (char: string = "─", len: number = 70): string => char.repeat(len);
 
 // ── Report Sections ───────────────────────────────────────────────
 
@@ -82,11 +89,7 @@ const printHeader = (): void => {
   console.log();
 };
 
-const printSummary = (
-  count: number,
-  answerable: number,
-  unanswerable: number,
-): void => {
+const printSummary = (count: number, answerable: number, unanswerable: number): void => {
   console.log(
     `  ${c.bold}Questions:${c.reset} ${count}  │  ${c.green}Answerable:${c.reset} ${answerable}  │  ${c.yellow}Unanswerable:${c.reset} ${unanswerable}`,
   );
@@ -117,9 +120,7 @@ const printBarChart = (metrics: { name: string; value: number; threshold?: numbe
   const maxNameLen = Math.max(...metrics.map((m) => m.name.length));
   for (const m of metrics) {
     const name = pad(m.name, maxNameLen);
-    console.log(
-      `  ${c.bold}${name}${c.reset}  ${bar(m.value, m.threshold)}  ${pct(m.value)}`,
-    );
+    console.log(`  ${c.bold}${name}${c.reset}  ${bar(m.value, m.threshold)}  ${pct(m.value)}`);
   }
   console.log();
 };
@@ -140,8 +141,7 @@ const printPerQuestionTable = (results: RetrievalEvalResult[]): void => {
     const hitStr = r.hit ? `${c.green}✅${c.reset}` : `${c.red}❌${c.reset}`;
 
     // Color recall based on quality
-    const recallColor =
-      r.recallAtK >= 0.8 ? c.green : r.recallAtK >= 0.5 ? c.yellow : c.red;
+    const recallColor = r.recallAtK >= 0.8 ? c.green : r.recallAtK >= 0.5 ? c.yellow : c.red;
 
     console.log(
       `  ${pad(r.questionId, 32)}${recallColor}${padLeft(recallStr, 8)}${c.reset}${padLeft(precStr, 8)}${padLeft(mrrStr, 8)}${padLeft(ndcgStr, 8)}${padLeft(hitStr, 8)}`,
@@ -160,16 +160,12 @@ const printFailedQuestions = (results: RetrievalEvalResult[]): void => {
     return;
   }
 
-  console.log(
-    `  ${c.red}${c.bold}MISSED QUESTIONS (${failed.length})${c.reset}`,
-  );
+  console.log(`  ${c.red}${c.bold}MISSED QUESTIONS (${failed.length})${c.reset}`);
   console.log(`  ${"─".repeat(72)}`);
   for (const r of failed) {
     console.log(`  ${c.red}❌ ${r.questionId}${c.reset}`);
     console.log(`     ${c.dim}Question:${c.reset} ${r.question}`);
-    console.log(
-      `     ${c.dim}Expected:${c.reset} ${r.expectedPolicyIds.join(", ")}`,
-    );
+    console.log(`     ${c.dim}Expected:${c.reset} ${r.expectedPolicyIds.join(", ")}`);
     console.log(
       `     ${c.dim}Got:${c.reset}      ${r.retrievedPolicyIds.length > 0 ? r.retrievedPolicyIds.join(", ") : "(none)"}`,
     );
@@ -181,9 +177,7 @@ const printOverallVerdict = (
   retrievalMetrics: { name: string; value: number; threshold: number }[],
   genMetrics?: { name: string; value: number; threshold: number }[],
 ): void => {
-  const allMetrics = genMetrics
-    ? [...retrievalMetrics, ...genMetrics]
-    : retrievalMetrics;
+  const allMetrics = genMetrics ? [...retrievalMetrics, ...genMetrics] : retrievalMetrics;
   const passed = allMetrics.filter((m) => pass(m.value, m.threshold)).length;
   const total = allMetrics.length;
 
@@ -268,15 +262,9 @@ const main = async (): Promise<void> => {
   const agg = aggregateMetrics(retrievalResults, generationResults, answerableMap);
 
   const answerableQuestions = evalQuestions.filter((q) => q.answerable).length;
-  const unanswerableQuestions = evalQuestions.filter(
-    (q) => !q.answerable,
-  ).length;
+  const unanswerableQuestions = evalQuestions.filter((q) => !q.answerable).length;
 
-  printSummary(
-    evalQuestions.length,
-    answerableQuestions,
-    unanswerableQuestions,
-  );
+  printSummary(evalQuestions.length, answerableQuestions, unanswerableQuestions);
 
   // Step 4: Retrieval metrics
   const retrievalMetrics = [

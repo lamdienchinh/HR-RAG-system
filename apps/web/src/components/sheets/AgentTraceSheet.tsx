@@ -1,30 +1,10 @@
 import { useState } from "react";
-import {
-  Brain,
-  GitBranch,
-  Loader2,
-  RefreshCw,
-  Search,
-  Sparkles,
-  Wand2,
-} from "lucide-react";
+import { Brain, GitBranch, Loader2, RefreshCw, Search, Sparkles, Wand2 } from "lucide-react";
 
 import type { AgentQueryAnalysis, AgentTraceStep } from "../../apis/api";
 import { Badge } from "../ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "../ui/dialog";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetBody,
-} from "../ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetBody } from "../ui/sheet";
 
 const STEP_ICONS: Record<AgentTraceStep["type"], typeof Brain> = {
   analyze: Brain,
@@ -89,8 +69,7 @@ export const AgentTraceSheet = ({
   // Infer what step is currently running
   const lastStep = steps[steps.length - 1];
   const isStillWorking =
-    isRunning &&
-    (!lastStep || lastStep.type === "retrieve" || lastStep.type === "generate");
+    isRunning && (!lastStep || lastStep.type === "retrieve" || lastStep.type === "generate");
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -101,9 +80,7 @@ export const AgentTraceSheet = ({
               <GitBranch className="size-3.5" />
             </div>
             Agent Trace
-            {isRunning && (
-              <Loader2 className="size-4 animate-spin text-violet-600" />
-            )}
+            {isRunning && <Loader2 className="size-4 animate-spin text-violet-600" />}
           </SheetTitle>
           <div className="flex flex-wrap items-center gap-2 pt-1">
             {strategy && (
@@ -112,9 +89,7 @@ export const AgentTraceSheet = ({
               </Badge>
             )}
             {iterations && iterations > 1 && (
-              <Badge className="bg-orange-50 text-[10px] text-orange-700">
-                {iterations} lượt
-              </Badge>
+              <Badge className="bg-orange-50 text-[10px] text-orange-700">{iterations} lượt</Badge>
             )}
           </div>
         </SheetHeader>
@@ -123,21 +98,15 @@ export const AgentTraceSheet = ({
           {/* Query Analysis */}
           {analysis && (
             <div className="mb-4 rounded-xl bg-violet-50 p-3 text-xs ring-1 ring-violet-100">
-              <div className="mb-1.5 font-bold text-violet-900">
-                Phân tích truy vấn
-              </div>
+              <div className="mb-1.5 font-bold text-violet-900">Phân tích truy vấn</div>
               <div className="grid grid-cols-2 gap-1.5">
                 <div>
                   <span className="text-violet-500">Ý định:</span>{" "}
-                  <span className="font-medium text-violet-800">
-                    {analysis.intent}
-                  </span>
+                  <span className="font-medium text-violet-800">{analysis.intent}</span>
                 </div>
                 <div>
                   <span className="text-violet-500">Độ phức tạp:</span>{" "}
-                  <span className="font-medium text-violet-800">
-                    {analysis.complexity}
-                  </span>
+                  <span className="font-medium text-violet-800">{analysis.complexity}</span>
                 </div>
               </div>
               {analysis.keyEntities.length > 0 && (
@@ -164,9 +133,7 @@ export const AgentTraceSheet = ({
                 </div>
               )}
               {analysis.reasoning && (
-                <div className="mt-1.5 text-violet-600 italic">
-                  {analysis.reasoning}
-                </div>
+                <div className="mt-1.5 text-violet-600 italic">{analysis.reasoning}</div>
               )}
             </div>
           )}
@@ -174,10 +141,9 @@ export const AgentTraceSheet = ({
           {/* Pipeline flow explanation */}
           {steps.length > 0 && (
             <div className="mb-3 rounded-lg bg-slate-50 p-2.5 text-[10px] leading-4 text-slate-500 ring-1 ring-slate-100">
-              <strong className="text-slate-600">Luồng xử lý:</strong> Phân tích
-              câu hỏi → Tìm kiếm tài liệu → Tổng hợp trả lời
-              {steps.some((s) => s.type === "reflect") &&
-                " → Tự đánh giá → Tinh chỉnh"}
+              <strong className="text-slate-600">Luồng xử lý:</strong> Phân tích câu hỏi → Tìm kiếm
+              tài liệu → Tổng hợp trả lời
+              {steps.some((s) => s.type === "reflect") && " → Tự đánh giá → Tinh chỉnh"}
             </div>
           )}
 
@@ -185,17 +151,13 @@ export const AgentTraceSheet = ({
           <div className="space-y-2">
             {steps.map((step, index) => {
               const Icon = STEP_ICONS[step.type] ?? Brain;
-              const colorClass =
-                STEP_COLORS[step.type] ?? "text-slate-600 bg-slate-100";
+              const colorClass = STEP_COLORS[step.type] ?? "text-slate-600 bg-slate-100";
               const borderClass =
-                STEP_BORDER_COLORS[step.type] ??
-                "border-slate-200 bg-slate-50/50";
+                STEP_BORDER_COLORS[step.type] ?? "border-slate-200 bg-slate-50/50";
 
               // Truncate detail for general overview
               const needsTruncation = step.detail.length > 120;
-              const displayText = needsTruncation
-                ? `${step.detail.slice(0, 120)}...`
-                : step.detail;
+              const displayText = needsTruncation ? `${step.detail.slice(0, 120)}...` : step.detail;
 
               return (
                 <div
@@ -224,16 +186,17 @@ export const AgentTraceSheet = ({
                         {displayText}
                       </p>
                     </div>
-                    <div className="text-[10px] text-slate-300 font-semibold">
-                      #{index + 1}
-                    </div>
+                    <div className="text-[10px] text-slate-300 font-semibold">#{index + 1}</div>
                   </div>
                 </div>
               );
             })}
 
             {/* Dialog Modal xem chi tiết */}
-            <Dialog open={selectedStep !== null} onOpenChange={(open) => !open && setSelectedStep(null)}>
+            <Dialog
+              open={selectedStep !== null}
+              onOpenChange={(open) => !open && setSelectedStep(null)}
+            >
               <DialogContent className="sm:max-w-[600px] max-h-[85vh] flex flex-col gap-4">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2.5 text-base">
@@ -245,7 +208,9 @@ export const AgentTraceSheet = ({
                       {selectedStep?.duration}ms
                     </Badge>
                   </DialogTitle>
-                  <DialogDescription>Chi tiết thông số kỹ thuật và kết quả truy xuất dữ liệu của bước này</DialogDescription>
+                  <DialogDescription>
+                    Chi tiết thông số kỹ thuật và kết quả truy xuất dữ liệu của bước này
+                  </DialogDescription>
                 </DialogHeader>
                 <div className="mt-2 flex-1 overflow-y-auto rounded-2xl border border-slate-200/60 bg-slate-50 p-4 font-mono text-xs text-slate-700 leading-relaxed whitespace-pre-wrap max-h-[50vh]">
                   {selectedStep?.detail}

@@ -1,4 +1,9 @@
-import { answerQuestion, answerQuestionStream, type AnswerOptions, type AnswerStreamOptions } from "../answer.js";
+import {
+  answerQuestion,
+  answerQuestionStream,
+  type AnswerOptions,
+  type AnswerStreamOptions,
+} from "../answer.js";
 import type { RetrievedChunk } from "../types.js";
 import { runGeminiAgenticStep, type AgenticStepMessage } from "./gemini-client.js";
 import { executeTool } from "./tools.js";
@@ -75,10 +80,7 @@ export interface AgentOptions {
  * tools and analyze results, then uses the main Answering Model (Gemini)
  * to format and present the final answer with citations.
  */
-export const runAgent = async (
-  question: string,
-  options: AgentOptions,
-): Promise<AgentResult> => {
+export const runAgent = async (question: string, options: AgentOptions): Promise<AgentResult> => {
   const traceSteps: AgentTraceStep[] = [];
   const totalStart = Date.now();
   const { onStep, onAnalysis } = options;
@@ -110,7 +112,7 @@ export const runAgent = async (
   let finalAnswerText = "";
   const executedToolSummaries = new Map<string, string>();
 
-  const systemInstruction = 
+  const systemInstruction =
     "You are a professional HR assistant. Help the employee with their queries. " +
     "Use your tools to lookup information. Always search policies if they ask about rules, allowances, or entitlements. " +
     "Do not assume or guess if you lack information.";
@@ -123,7 +125,7 @@ export const runAgent = async (
     const agentResult = await runGeminiAgenticStep(
       messages,
       systemInstruction,
-      "gemma-4-26b-a4b-it" // reasoning always defaults to Gemma 4 MoE (cheap & fast)
+      "gemma-4-26b-a4b-it", // reasoning always defaults to Gemma 4 MoE (cheap & fast)
     );
 
     const stepDuration = Date.now() - stepStart;
@@ -134,14 +136,14 @@ export const runAgent = async (
       const callDescriptions = agentResult.functionCalls
         .map((fc) => `${fc.name}(${JSON.stringify(fc.args)})`)
         .join(", ");
-      
+
       emit(
         createTraceStep(
           "analyze",
           `Lý luận Agent (Lượt ${iterations})`,
           `Quyết định gọi công cụ: ${callDescriptions}`,
           stepDuration,
-        )
+        ),
       );
 
       // Record function calls to model history
@@ -171,14 +173,14 @@ export const runAgent = async (
           executedToolSummaries.set(
             "calculate_leave_balance",
             `- Số ngày phép năm của nhân viên (Mã: ${toolResult.employeeId}, Tên: ${toolResult.employeeName}): ` +
-            `Tổng số ngày phép: ${toolResult.totalLeaveDays} ngày, ` +
-            `Đã nghỉ: ${toolResult.usedLeaveDays} ngày, ` +
-            `Còn lại (Khả dụng): ${toolResult.remainingLeaveDays} ngày.`
+              `Tổng số ngày phép: ${toolResult.totalLeaveDays} ngày, ` +
+              `Đã nghỉ: ${toolResult.usedLeaveDays} ngày, ` +
+              `Còn lại (Khả dụng): ${toolResult.remainingLeaveDays} ngày.`,
           );
         } else if (fc.name === "get_current_date") {
           executedToolSummaries.set(
             "get_current_date",
-            `- Ngày hiện tại từ hệ thống: ${toolResult.currentDate}.`
+            `- Ngày hiện tại từ hệ thống: ${toolResult.currentDate}.`,
           );
         }
 
@@ -194,27 +196,34 @@ export const runAgent = async (
         let toolDetail = "";
         if (fc.name === "search_hr_policies") {
           const chunksList = toolResult.chunks || [];
-          toolDetail = `[CÔNG CỤ TÌM KIẾM CHÍNH SÁCH: search_hr_policies]\n` +
+          toolDetail =
+            `[CÔNG CỤ TÌM KIẾM CHÍNH SÁCH: search_hr_policies]\n` +
             `• Từ khóa truy vấn: "${fc.args.query}"\n` +
             `• Số lượng tài liệu tìm thấy: ${chunksList.length} chunks\n\n` +
             `--- DANH SÁCH CÁC CHUNK TÀI LIỆU TRUY XUẤT ---\n\n` +
-            chunksList.map((c: any, i: number) => {
-              return `[CHUNK TÀI LIỆU #${i + 1}]\n` +
-                `- ID: ${c.id}\n` +
-                `- Chính sách: ${c.title} (v${c.version})\n` +
-                `- Trạng thái: ${c.status === "current" ? "Đang áp dụng (current)" : c.status}\n` +
-                `- Độ tương đồng (Similarity Score): ${Math.round(c.score * 100)}%\n` +
-                `- Tính bảo mật: ${c.isPrivate ? "Bảo mật (Confidential)" : "Nội bộ (Internal)"}\n` +
-                `- Nội dung chi tiết:\n` +
-                `========================================================================\n` +
-                `${c.content}\n` +
-                `========================================================================`;
-            }).join("\n\n");
+            chunksList
+              .map((c: any, i: number) => {
+                return (
+                  `[CHUNK TÀI LIỆU #${i + 1}]\n` +
+                  `- ID: ${c.id}\n` +
+                  `- Chính sách: ${c.title} (v${c.version})\n` +
+                  `- Trạng thái: ${c.status === "current" ? "Đang áp dụng (current)" : c.status}\n` +
+                  `- Độ tương đồng (Similarity Score): ${Math.round(c.score * 100)}%\n` +
+                  `- Tính bảo mật: ${c.isPrivate ? "Bảo mật (Confidential)" : "Nội bộ (Internal)"}\n` +
+                  `- Nội dung chi tiết:\n` +
+                  `========================================================================\n` +
+                  `${c.content}\n` +
+                  `========================================================================`
+                );
+              })
+              .join("\n\n");
         } else if (fc.name === "get_current_date") {
-          toolDetail = `[CÔNG CỤ THỜI GIAN: get_current_date]\n` +
+          toolDetail =
+            `[CÔNG CỤ THỜI GIAN: get_current_date]\n` +
             `• Kết quả trả về từ hệ thống: "${toolResult.currentDate}"`;
         } else if (fc.name === "calculate_leave_balance") {
-          toolDetail = `[CÔNG CỤ TRA CỨU PHÉP NĂM: calculate_leave_balance]\n` +
+          toolDetail =
+            `[CÔNG CỤ TRA CỨU PHÉP NĂM: calculate_leave_balance]\n` +
             `• Mã nhân viên: ${toolResult.employeeId}\n` +
             `• Họ và tên: ${toolResult.employeeName}\n` +
             `• Tổng số ngày phép: ${toolResult.totalLeaveDays} ngày\n` +
@@ -224,14 +233,7 @@ export const runAgent = async (
           toolDetail = `Kết quả: ${JSON.stringify(toolResult, null, 2)}`;
         }
 
-        emit(
-          createTraceStep(
-            "retrieve",
-            `Thực thi Công cụ: ${fc.name}`,
-            toolDetail,
-            toolDuration,
-          )
-        );
+        emit(createTraceStep("retrieve", `Thực thi Công cụ: ${fc.name}`, toolDetail, toolDuration));
 
         responseParts.push({
           functionResponse: { name: fc.name, response: toolResult },
@@ -242,7 +244,6 @@ export const runAgent = async (
         role: "user",
         parts: responseParts,
       });
-
     } else {
       // LLM generated a text response directly (no tools needed)
       finalAnswerText = agentResult.text ?? "";
@@ -252,7 +253,7 @@ export const runAgent = async (
           `Lý luận Agent (Lượt ${iterations})`,
           `Đã có câu trả lời trực tiếp hoặc thông tin tự suy luận: "${finalAnswerText.slice(0, 100)}..."`,
           stepDuration,
-        )
+        ),
       );
       break; // Exit ReAct loop
     }
@@ -318,7 +319,11 @@ export const runAgent = async (
         onToken: options.onToken,
       };
 
-      for await (const event of answerQuestionStream(augmentedQuestion, allRetrievedChunks, streamOptions)) {
+      for await (const event of answerQuestionStream(
+        augmentedQuestion,
+        allRetrievedChunks,
+        streamOptions,
+      )) {
         if (event.type === "token" && event.text) {
           streamedText += event.text;
         } else if (event.type === "done" && event.result) {
@@ -337,7 +342,7 @@ export const runAgent = async (
           "Tổng hợp câu trả lời (Mô hình chính)",
           `${answerResult.citations.length} trích dẫn, Mode: ${answerResult.mode}, Model: ${answerResult.model}`,
           Date.now() - scoreStart,
-        )
+        ),
       );
 
       return {
@@ -355,7 +360,11 @@ export const runAgent = async (
       };
     } else {
       // Non-streaming path with main model
-      const answerResult = await answerQuestion(augmentedQuestion, allRetrievedChunks, answerOptions);
+      const answerResult = await answerQuestion(
+        augmentedQuestion,
+        allRetrievedChunks,
+        answerOptions,
+      );
 
       emit(
         createTraceStep(
@@ -363,7 +372,7 @@ export const runAgent = async (
           "Tổng hợp câu trả lời (Mô hình chính)",
           `${answerResult.citations.length} trích dẫn, Mode: ${answerResult.mode}, Model: ${answerResult.model}`,
           Date.now() - scoreStart,
-        )
+        ),
       );
 
       return {
@@ -400,7 +409,7 @@ export const runAgent = async (
       "Tổng hợp câu trả lời (Mô hình rẻ)",
       `Không dùng tài liệu, phản hồi trực tiếp bằng ${finalAnswerModel}`,
       Date.now() - scoreStart,
-    )
+    ),
   );
 
   return {

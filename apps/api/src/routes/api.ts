@@ -17,11 +17,6 @@ import {
   reseedPolicies,
 } from "../controllers/policyController.js";
 import {
-  askStandard,
-  askStream,
-  askAgent,
-} from "../controllers/askController.js";
-import {
   getConversationsList,
   createNewConversation,
   getMessagesByConversationId,
@@ -52,58 +47,22 @@ apiRouter.get("/policies", authMiddleware, getPoliciesList);
 apiRouter.post("/policies", authMiddleware, requireAdmin, createNewPolicy);
 apiRouter.get("/policies/:id", authMiddleware, getPolicyById);
 apiRouter.put("/policies/:id", authMiddleware, requireAdmin, updatePolicyById);
-apiRouter.delete(
-  "/policies/:id",
-  authMiddleware,
-  requireAdmin,
-  deletePolicyById,
-);
-apiRouter.patch(
-  "/policies/:id/status",
-  authMiddleware,
-  requireAdmin,
-  patchPolicyStatus,
-);
-apiRouter.patch(
-  "/policies/:id/privacy",
-  authMiddleware,
-  requireAdmin,
-  patchPolicyPrivacy,
-);
+apiRouter.delete("/policies/:id", authMiddleware, requireAdmin, deletePolicyById);
+apiRouter.patch("/policies/:id/status", authMiddleware, requireAdmin, patchPolicyStatus);
+apiRouter.patch("/policies/:id/privacy", authMiddleware, requireAdmin, patchPolicyPrivacy);
 
 // --- Indexing ---
 apiRouter.post("/reindex", authMiddleware, requireAdmin, reindexAllPolicies);
 apiRouter.post("/reseed", authMiddleware, requireAdmin, reseedPolicies);
 
-// --- Standalone RAG Asks ---
-apiRouter.post("/ask", authMiddleware, askStandard);
-apiRouter.post("/ask/stream", authMiddleware, askStream);
-apiRouter.post("/ask/agent", authMiddleware, askAgent);
-
 // --- Conversation Management ---
 apiRouter.get("/conversations", authMiddleware, getConversationsList);
 apiRouter.post("/conversations", authMiddleware, createNewConversation);
-apiRouter.get(
-  "/conversations/:id/messages",
-  authMiddleware,
-  getMessagesByConversationId,
-);
-apiRouter.get(
-  "/conversations/:id/status",
-  authMiddleware,
-  getStatusByConversationId,
-);
+apiRouter.get("/conversations/:id/messages", authMiddleware, getMessagesByConversationId);
+apiRouter.get("/conversations/:id/status", authMiddleware, getStatusByConversationId);
 apiRouter.patch("/conversations/:id", authMiddleware, updateConversationTitle);
 apiRouter.delete("/conversations/:id", authMiddleware, deleteConversationById);
 
 // --- Conversation RAG Chat ---
-apiRouter.post(
-  "/conversations/:id/ask/agent",
-  authMiddleware,
-  askConversationAgent,
-);
-apiRouter.post(
-  "/conversations/:id/ask",
-  authMiddleware,
-  askConversationStandard,
-);
+apiRouter.post("/conversations/:id/ask/agent", authMiddleware, askConversationAgent);
+apiRouter.post("/conversations/:id/ask", authMiddleware, askConversationStandard);

@@ -6,13 +6,7 @@ import { useConfigStore } from "../../store";
 import { T } from "../../vi";
 import { Badge } from "../ui/badge";
 import { Switch } from "../ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import {
   Sheet,
   SheetContent,
@@ -122,9 +116,7 @@ export const SettingsSheet = ({ open, onOpenChange }: SettingsSheetProps) => {
                 })
               }
             />
-            <p className="text-xs leading-5 text-slate-500">
-              {T.minScoreExplanation}
-            </p>
+            <p className="text-xs leading-5 text-slate-500">{T.minScoreExplanation}</p>
           </label>
 
           {/* Gemini model selector */}
@@ -151,21 +143,15 @@ export const SettingsSheet = ({ open, onOpenChange }: SettingsSheetProps) => {
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs leading-5 text-slate-500">
-              {T.geminiModelExplanation}
-            </p>
+            <p className="text-xs leading-5 text-slate-500">{T.geminiModelExplanation}</p>
           </div>
 
           {/* Google Search */}
           <div className="rounded-2xl p-3 ring-1 bg-amber-50 ring-amber-100">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="text-sm font-semibold text-amber-950">
-                  {T.googleSearch}
-                </div>
-                <div className="text-xs leading-5 text-amber-700">
-                  {T.googleSearchEnabled}
-                </div>
+                <div className="text-sm font-semibold text-amber-950">{T.googleSearch}</div>
+                <div className="text-xs leading-5 text-amber-700">{T.googleSearchEnabled}</div>
               </div>
               <Switch
                 checked={settings.allowExternalSearch}
@@ -184,9 +170,7 @@ export const SettingsSheet = ({ open, onOpenChange }: SettingsSheetProps) => {
           <div className="rounded-2xl p-3 ring-1 bg-sky-50 ring-sky-100">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="text-sm font-semibold text-sky-950">
-                  🎯 Tái xếp hạng (Reranker)
-                </div>
+                <div className="text-sm font-semibold text-sky-950">🎯 Tái xếp hạng (Reranker)</div>
                 <div className="text-xs leading-5 text-sky-700">
                   {settings.useReranker
                     ? "Bật BGE-Reranker cục bộ (Chính xác hơn, tốn CPU)"

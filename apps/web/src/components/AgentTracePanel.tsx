@@ -13,13 +13,7 @@ import { useState } from "react";
 
 import type { AgentQueryAnalysis, AgentTraceStep } from "../apis/api";
 import { Badge } from "./ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "./ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog";
 
 const STEP_ICONS: Record<AgentTraceStep["type"], typeof Brain> = {
   analyze: Brain,
@@ -78,9 +72,7 @@ export const AgentTracePanel = ({
             <GitBranch className="size-3.5" />
           </div>
           <span className="text-sm font-bold">Agent Trace</span>
-          {isRunning && (
-            <Loader2 className="size-3.5 animate-spin text-violet-600" />
-          )}
+          {isRunning && <Loader2 className="size-3.5 animate-spin text-violet-600" />}
           {strategy && (
             <Badge className="bg-violet-50 text-[10px] text-violet-700">
               {STRATEGY_LABELS[strategy] ?? strategy}
@@ -91,9 +83,7 @@ export const AgentTracePanel = ({
               {iterations} iterations
             </Badge>
           )}
-          {steps.length > 0 && (
-            <Badge className="text-[10px]">{totalDuration}ms</Badge>
-          )}
+          {steps.length > 0 && <Badge className="text-[10px]">{totalDuration}ms</Badge>}
         </div>
         {isExpanded ? (
           <ChevronDown className="size-4 text-slate-400" />
@@ -107,21 +97,15 @@ export const AgentTracePanel = ({
           {/* Query Analysis */}
           {analysis && (
             <div className="rounded-xl bg-violet-50 p-3 text-xs ring-1 ring-violet-100">
-              <div className="mb-1.5 font-bold text-violet-900">
-                Query Analysis
-              </div>
+              <div className="mb-1.5 font-bold text-violet-900">Query Analysis</div>
               <div className="grid grid-cols-2 gap-1.5">
                 <div>
                   <span className="text-violet-500">Intent:</span>{" "}
-                  <span className="font-medium text-violet-800">
-                    {analysis.intent}
-                  </span>
+                  <span className="font-medium text-violet-800">{analysis.intent}</span>
                 </div>
                 <div>
                   <span className="text-violet-500">Complexity:</span>{" "}
-                  <span className="font-medium text-violet-800">
-                    {analysis.complexity}
-                  </span>
+                  <span className="font-medium text-violet-800">{analysis.complexity}</span>
                 </div>
               </div>
               {analysis.keyEntities.length > 0 && (
@@ -148,9 +132,7 @@ export const AgentTracePanel = ({
                 </div>
               )}
               {analysis.reasoning && (
-                <div className="mt-1.5 text-violet-600 italic">
-                  {analysis.reasoning}
-                </div>
+                <div className="mt-1.5 text-violet-600 italic">{analysis.reasoning}</div>
               )}
             </div>
           )}
@@ -163,8 +145,7 @@ export const AgentTracePanel = ({
 
               {steps.map((step, index) => {
                 const Icon = STEP_ICONS[step.type] ?? Brain;
-                const colorClass =
-                  STEP_COLORS[step.type] ?? "text-slate-600 bg-slate-50";
+                const colorClass = STEP_COLORS[step.type] ?? "text-slate-600 bg-slate-50";
 
                 // Truncate detail for general overview
                 const needsTruncation = step.detail.length > 90;
@@ -173,16 +154,16 @@ export const AgentTracePanel = ({
                   : step.detail;
 
                 return (
-                  <div
-                    key={index}
-                    className="relative flex items-start gap-3 py-1.5"
-                  >
+                  <div key={index} className="relative flex items-start gap-3 py-1.5">
                     <div
                       className={`relative z-10 grid size-[15px] shrink-0 place-items-center rounded-full mt-0.5 ${colorClass}`}
                     >
                       <Icon className="size-2.5" />
                     </div>
-                    <div className="min-w-0 flex-1 cursor-pointer select-none" onClick={() => setSelectedStep(step)}>
+                    <div
+                      className="min-w-0 flex-1 cursor-pointer select-none"
+                      onClick={() => setSelectedStep(step)}
+                    >
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-bold text-slate-800 hover:text-violet-700 transition">
@@ -209,7 +190,10 @@ export const AgentTracePanel = ({
           )}
 
           {/* Dialog Modal xem chi tiết */}
-          <Dialog open={selectedStep !== null} onOpenChange={(open) => !open && setSelectedStep(null)}>
+          <Dialog
+            open={selectedStep !== null}
+            onOpenChange={(open) => !open && setSelectedStep(null)}
+          >
             <DialogContent className="sm:max-w-[600px] max-h-[85vh] flex flex-col gap-4">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2.5 text-base">
@@ -221,7 +205,9 @@ export const AgentTracePanel = ({
                     {selectedStep?.duration}ms
                   </Badge>
                 </DialogTitle>
-                <DialogDescription>Chi tiết luồng xử lý kỹ thuật và kết quả phản hồi của bước này</DialogDescription>
+                <DialogDescription>
+                  Chi tiết luồng xử lý kỹ thuật và kết quả phản hồi của bước này
+                </DialogDescription>
               </DialogHeader>
               <div className="mt-2 flex-1 overflow-y-auto rounded-2xl border border-slate-200/60 bg-slate-50 p-4 font-mono text-xs text-slate-700 leading-relaxed whitespace-pre-wrap max-h-[50vh]">
                 {selectedStep?.detail}

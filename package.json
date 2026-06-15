@@ -16,10 +16,16 @@
     "demo:db:reindex": "pnpm --filter @rag-demo/api db:reindex",
     "demo:run": "node scripts/demo/run-all.mjs",
     "demo:build": "pnpm --filter @rag-demo/api build && pnpm --filter @rag-demo/web build",
-    "demo:eval": "pnpm --filter @rag-demo/api eval"
+    "demo:eval": "pnpm --filter @rag-demo/api eval",
+    "demo:lint": "oxlint apps/api/src apps/web/src",
+    "demo:lint:fix": "oxlint apps/api/src apps/web/src --fix",
+    "demo:fmt": "oxfmt apps/api/src apps/web/src",
+    "demo:fmt:check": "oxfmt apps/api/src apps/web/src --check"
   },
   "devDependencies": {
-    "concurrently": "^9.1.0"
+    "concurrently": "^9.1.0",
+    "oxfmt": "^0.54.0",
+    "oxlint": "^1.69.0"
   },
   "dependencies": {
     "zustand": "^5.0.14"

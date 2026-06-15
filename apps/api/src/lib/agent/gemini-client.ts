@@ -84,8 +84,7 @@ export const runGeminiPureAgent = async (
       const chat = ai.chats.create({
         model: modelName,
         config: {
-          systemInstruction:
-            systemInstruction || "You are a helpful assistant.",
+          systemInstruction: systemInstruction || "You are a helpful assistant.",
         },
       });
 
@@ -104,9 +103,7 @@ export const runGeminiPureAgent = async (
     }
   }
 
-  throw new Error(
-    `Tất cả các model Gemini đều thất bại. Lỗi cuối cùng: ${errors.at(-1)}`,
-  );
+  throw new Error(`Tất cả các model Gemini đều thất bại. Lỗi cuối cùng: ${errors.at(-1)}`);
 };
 
 // ========================================================
@@ -135,8 +132,7 @@ export async function* runGeminiWithGroundingStream(
     throw new Error("GEMINI_API_KEY is missing");
   }
 
-  const configuredModel =
-    preferredModel || config.geminiModel || "gemini-2.5-flash";
+  const configuredModel = preferredModel || config.geminiModel || "gemini-2.5-flash";
   const modelsToTry = [...new Set([configuredModel, ...CANDIDATE_MODELS])];
   const errors: string[] = [];
 
@@ -150,8 +146,7 @@ export async function* runGeminiWithGroundingStream(
         model: modelName,
         contents: [{ role: "user", parts: [{ text: prompt }] }],
         config: {
-          systemInstruction:
-            systemInstruction || "You are a helpful assistant.",
+          systemInstruction: systemInstruction || "You are a helpful assistant.",
           ...(tools ? { tools } : {}),
         },
       });
@@ -164,8 +159,7 @@ export async function* runGeminiWithGroundingStream(
         if (chunkText) hasText = true;
 
         // Extract grounding metadata from any chunk that has it
-        const groundingChunks =
-          chunk.candidates?.[0]?.groundingMetadata?.groundingChunks;
+        const groundingChunks = chunk.candidates?.[0]?.groundingMetadata?.groundingChunks;
         if (groundingChunks) {
           externalSources = extractExternalSources(groundingChunks);
         }
@@ -188,9 +182,7 @@ export async function* runGeminiWithGroundingStream(
     }
   }
 
-  throw new Error(
-    `Tất cả các model Gemini đều thất bại. Lỗi cuối cùng: ${errors.at(-1)}`,
-  );
+  throw new Error(`Tất cả các model Gemini đều thất bại. Lỗi cuối cùng: ${errors.at(-1)}`);
 }
 
 // ========================================================
@@ -208,8 +200,7 @@ export const runGeminiWithGrounding = async (
     throw new Error("GEMINI_API_KEY is missing");
   }
 
-  const configuredModel =
-    preferredModel || config.geminiModel || "gemini-2.5-flash";
+  const configuredModel = preferredModel || config.geminiModel || "gemini-2.5-flash";
   const modelsToTry = [...new Set([configuredModel, ...CANDIDATE_MODELS])];
   const errors: string[] = [];
 
@@ -223,8 +214,7 @@ export const runGeminiWithGrounding = async (
         model: modelName,
         contents: [{ role: "user", parts: [{ text: prompt }] }],
         config: {
-          systemInstruction:
-            systemInstruction || "You are a helpful assistant.",
+          systemInstruction: systemInstruction || "You are a helpful assistant.",
           ...(tools ? { tools } : {}),
         },
       });
@@ -233,8 +223,7 @@ export const runGeminiWithGrounding = async (
       if (!text) throw new Error("Empty response text");
 
       // Trích xuất grounding sources từ candidate đầu tiên
-      const groundingChunks =
-        response.candidates?.[0]?.groundingMetadata?.groundingChunks;
+      const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
       const externalSources = extractExternalSources(groundingChunks);
 
       return { text, model: modelName, externalSources };
@@ -246,9 +235,7 @@ export const runGeminiWithGrounding = async (
     }
   }
 
-  throw new Error(
-    `Tất cả các model Gemini đều thất bại. Lỗi cuối cùng: ${errors.at(-1)}`,
-  );
+  throw new Error(`Tất cả các model Gemini đều thất bại. Lỗi cuối cùng: ${errors.at(-1)}`);
 };
 
 // ========================================================
@@ -294,8 +281,7 @@ export const runGeminiAgenticStep = async (
         model: modelName,
         contents: messages as any,
         config: {
-          systemInstruction:
-            systemInstruction || "You are a helpful HR policy assistant.",
+          systemInstruction: systemInstruction || "You are a helpful HR policy assistant.",
           tools: agentToolsDeclarations, // Đăng ký bộ công cụ
         },
       });

@@ -466,8 +466,7 @@ const questionsVi: readonly QuestionSpec[] = [
   },
   {
     id: "hr-ot-weekend-no-approval",
-    question:
-      "Tôi có thể yêu cầu thanh toán OT nếu làm Thứ Bảy mà chưa được duyệt không?",
+    question: "Tôi có thể yêu cầu thanh toán OT nếu làm Thứ Bảy mà chưa được duyệt không?",
     expectedPolicyIds: ["overtime-policy"],
     answerable: true,
   },
@@ -509,8 +508,7 @@ const questionsVi: readonly QuestionSpec[] = [
   },
   {
     id: "hr-customer-data-ai-tools",
-    question:
-      "Dữ liệu khách hàng có được sao chép vào chatbot AI công khai không?",
+    question: "Dữ liệu khách hàng có được sao chép vào chatbot AI công khai không?",
     expectedPolicyIds: ["access-control-policy"],
     answerable: true,
   },
@@ -618,15 +616,13 @@ const questionsVi: readonly QuestionSpec[] = [
   },
   {
     id: "hr-leave-comparison",
-    question:
-      "So sánh nghỉ phép năm, nghỉ ốm và nghỉ thai sản — mỗi loại được bao nhiêu ngày?",
+    question: "So sánh nghỉ phép năm, nghỉ ốm và nghỉ thai sản — mỗi loại được bao nhiêu ngày?",
     expectedPolicyIds: ["time-off-policy", "leave-of-absence"],
     answerable: true,
   },
   {
     id: "hr-departure-process",
-    question:
-      "Khi nhân viên nghỉ việc, cần làm những gì về thiết bị, quyền truy cập và bàn giao?",
+    question: "Khi nhân viên nghỉ việc, cần làm những gì về thiết bị, quyền truy cập và bàn giao?",
     expectedPolicyIds: [
       "onboarding-offboarding-policy",
       "equipment-policy",
@@ -655,11 +651,9 @@ const questionsVi: readonly QuestionSpec[] = [
   },
 ];
 
-export const getSeedPolicies = (locale: Locale = "vi"): readonly SeedPolicy[] =>
-  policiesVi;
+export const getSeedPolicies = (locale: Locale = "vi"): readonly SeedPolicy[] => policiesVi;
 
-export const getPresetQuestions = (locale: Locale = "vi"): readonly QuestionSpec[] =>
-  questionsVi;
+export const getPresetQuestions = (locale: Locale = "vi"): readonly QuestionSpec[] => questionsVi;
 
 // Default exports for backward compatibility
 export const seedPolicies = policiesVi;

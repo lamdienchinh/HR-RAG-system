@@ -1,12 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 
-import {
-  createPolicy,
-  fetchPolicies,
-  reindexPolicies,
-  togglePolicyPrivacy,
-} from "../apis/api";
+import { createPolicy, fetchPolicies, reindexPolicies, togglePolicyPrivacy } from "../apis/api";
 import { T } from "../vi";
 import type { Policy } from "../types";
 import { PolicyCreator } from "../features/policy/PolicyCreator";
@@ -28,12 +23,8 @@ export const PolicyDashboardPage = () => {
   const queryClient = useQueryClient();
   const [selectedPolicyId, setSelectedPolicyId] = useState("");
   const [draftContent, setDraftContent] = useState("");
-  const [statusMessage, setStatusMessage] = useState<string>(
-    T.policyDefaultStatus,
-  );
-  const [statusFilter, setStatusFilter] = useState<"all" | "current" | "stale">(
-    "all",
-  );
+  const [statusMessage, setStatusMessage] = useState<string>(T.policyDefaultStatus);
+  const [statusFilter, setStatusFilter] = useState<"all" | "current" | "stale">("all");
 
   const policiesQuery = useQuery({
     queryKey: ["policies"],
@@ -83,10 +74,7 @@ export const PolicyDashboardPage = () => {
     setDraftContent(content ?? p?.content ?? "");
   };
 
-  const handleCreatePolicy = async (
-    title: string,
-    category: string,
-  ): Promise<void> => {
+  const handleCreatePolicy = async (title: string, category: string): Promise<void> => {
     setStatusMessage(T.policyCreating);
     const policy = await createMutation.mutateAsync({ title, category });
     setSelectedPolicyId(policy.id);

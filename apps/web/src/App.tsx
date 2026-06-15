@@ -1,23 +1,23 @@
-import { Link, Outlet, useMatches, useNavigate } from '@tanstack/react-router';
-import { Bot, LogOut } from 'lucide-react';
-import { useEffect } from 'react';
+import { Link, Outlet, useMatches, useNavigate } from "@tanstack/react-router";
+import { Bot, LogOut } from "lucide-react";
+import { useEffect } from "react";
 
-import { useAuth } from './lib/auth';
-import { T } from './vi';
+import { useAuth } from "./lib/auth";
+import { T } from "./vi";
 
 const App = () => {
   const { user, loading, logout } = useAuth();
   const navigate = useNavigate();
   const matches = useMatches();
-  const isLoginPage = matches.some((m) => m.fullPath === '/login');
+  const isLoginPage = matches.some((m) => m.fullPath === "/login");
 
   // Redirect to login if not authenticated, or away from login if authenticated
   useEffect(() => {
     if (loading) return;
     if (!user && !isLoginPage) {
-      void navigate({ to: '/login' });
+      void navigate({ to: "/login" });
     } else if (user && isLoginPage) {
-      void navigate({ to: '/' });
+      void navigate({ to: "/" });
     }
   }, [loading, user, isLoginPage, navigate]);
 
@@ -42,7 +42,7 @@ const App = () => {
 
   const handleLogout = (): void => {
     logout();
-    void navigate({ to: '/login' });
+    void navigate({ to: "/login" });
   };
 
   return (
@@ -54,21 +54,23 @@ const App = () => {
           </div>
           <div>
             <h1 className="text-lg font-black tracking-tight">HR Assistant</h1>
-            <p className="text-xs text-slate-500">Chat chính sách nhân sự với truy xuất bằng chứng</p>
+            <p className="text-xs text-slate-500">
+              Chat chính sách nhân sự với truy xuất bằng chứng
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <nav className="flex rounded-full bg-slate-100 p-1 text-sm font-semibold">
             <Link
-              activeProps={{ className: 'bg-white text-slate-950 shadow-sm' }}
+              activeProps={{ className: "bg-white text-slate-950 shadow-sm" }}
               className="rounded-full px-4 py-1.5 text-slate-500 transition"
               to="/"
             >
               {T.navChat}
             </Link>
-            {user.role === 'admin' && (
+            {user.role === "admin" && (
               <Link
-                activeProps={{ className: 'bg-white text-slate-950 shadow-sm' }}
+                activeProps={{ className: "bg-white text-slate-950 shadow-sm" }}
                 className="rounded-full px-4 py-1.5 text-slate-500 transition"
                 to="/policies"
               >
@@ -78,9 +80,13 @@ const App = () => {
           </nav>
           <div className="flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5">
             <span className="text-xs font-semibold text-slate-700">{user.displayName}</span>
-            <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold ${
-              user.role === 'admin' ? 'bg-violet-100 text-violet-700' : 'bg-emerald-100 text-emerald-700'
-            }`}>
+            <span
+              className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold ${
+                user.role === "admin"
+                  ? "bg-violet-100 text-violet-700"
+                  : "bg-emerald-100 text-emerald-700"
+              }`}
+            >
               {user.role}
             </span>
             <button

@@ -38,9 +38,14 @@ export const SuggestedQuestions = ({
           onClick={() => setShowAll((prev) => !prev)}
         >
           {showAll ? (
-            <><ChevronUp className="size-3.5" /> Thu gọn</>
+            <>
+              <ChevronUp className="size-3.5" /> Thu gọn
+            </>
           ) : (
-            <><ChevronDown className="size-3.5" /> Xem thêm {questions.length - INITIAL_LIMIT} câu hỏi</>
+            <>
+              <ChevronDown className="size-3.5" /> Xem thêm {questions.length - INITIAL_LIMIT} câu
+              hỏi
+            </>
           )}
         </button>
       )}

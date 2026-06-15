@@ -41,9 +41,7 @@ export const ChatPage = () => {
   const [prompt, setPrompt] = useState("");
   const [workflowStatus, setWorkflowStatus] = useState<string>(T.ready);
   const [isStreaming, setIsStreaming] = useState(false);
-  const [activeEvidence, setActiveEvidence] = useState<EvidenceEvent | null>(
-    null,
-  );
+  const [activeEvidence, setActiveEvidence] = useState<EvidenceEvent | null>(null);
   const [activeResult, setActiveResult] = useState<AskResult | null>(null);
 
   const convStorageKey = userId ? `rag-demo-conv-${userId}` : "";
@@ -56,8 +54,7 @@ export const ChatPage = () => {
   const [conversationId, setConversationId] = useState<string | null>(() =>
     convStorageKey ? localStorage.getItem(convStorageKey) : null,
   );
-  const [conversationStatus, setConversationStatus] =
-    useState<ConversationStatus | null>(null);
+  const [conversationStatus, setConversationStatus] = useState<ConversationStatus | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const userMessageRef = useRef<HTMLDivElement>(null);
   const [agentTrace, setAgentTrace] = useState(emptyAgentTrace);
@@ -138,13 +135,8 @@ export const ChatPage = () => {
     queryFn: fetchQuestions,
   });
 
-  const updateAssistantMessage = (
-    id: string,
-    patch: Partial<ChatMessage>,
-  ): void => {
-    setMessages((cur) =>
-      cur.map((m) => (m.id === id ? { ...m, ...patch } : m)),
-    );
+  const updateAssistantMessage = (id: string, patch: Partial<ChatMessage>): void => {
+    setMessages((cur) => cur.map((m) => (m.id === id ? { ...m, ...patch } : m)));
   };
 
   const handleAsk = (): void => {
@@ -213,17 +205,18 @@ export const ChatPage = () => {
         // Tự động dựng Luồng xử lý chi tiết cho Standard RAG để đảm bảo tính đồng bộ trên UI
         const hasCitations = (result.citations ?? []).length > 0;
         const totalDocsFound = (result.retrievedChunks ?? []).length;
-        
+
         const retrieveStep: AgentTraceStep = {
           type: "retrieve",
           label: "Tìm kiếm tài liệu (Hybrid Search)",
-          detail: `Đã thực hiện truy xuất tài liệu từ cơ sở dữ liệu Postgres bằng thuật toán lai (Dense Vector + Sparse FTS + RRF).\n\n` +
-                  `• Tài liệu tìm thấy: ${totalDocsFound} chunks ứng viên\n` +
-                  `• Bộ lọc bảo mật: Tự động lọc theo quyền ${user?.role === "admin" ? "Admin" : "Nhân viên thông thường"}\n` +
-                  `• Reranker: ${settings.useReranker ? "Đang BẬT (Tối ưu hóa thứ hạng bằng BGE-Reranker cục bộ)" : "Đã TẮT (Chế độ Bypass, tối ưu hóa tốc độ tối đa)"}\n` +
-                  `• Bộ sinh Vector: ${settings.embeddingProvider === "cloud" ? "Đám mây Google (text-embedding-004 - 150ms)" : "Cục bộ HuggingFace CPU (MiniLM - 1 giây)"}\n` +
-                  `• Ngưỡng điểm tối thiểu (minScore): ${settings.minScore}\n` +
-                  `• Số lượng tối đa (topK): ${settings.topK}`,
+          detail:
+            `Đã thực hiện truy xuất tài liệu từ cơ sở dữ liệu Postgres bằng thuật toán lai (Dense Vector + Sparse FTS + RRF).\n\n` +
+            `• Tài liệu tìm thấy: ${totalDocsFound} chunks ứng viên\n` +
+            `• Bộ lọc bảo mật: Tự động lọc theo quyền ${user?.role === "admin" ? "Admin" : "Nhân viên thông thường"}\n` +
+            `• Reranker: ${settings.useReranker ? "Đang BẬT (Tối ưu hóa thứ hạng bằng BGE-Reranker cục bộ)" : "Đã TẮT (Chế độ Bypass, tối ưu hóa tốc độ tối đa)"}\n` +
+            `• Bộ sinh Vector: ${settings.embeddingProvider === "cloud" ? "Đám mây Google (text-embedding-004 - 150ms)" : "Cục bộ HuggingFace CPU (MiniLM - 1 giây)"}\n` +
+            `• Ngưỡng điểm tối thiểu (minScore): ${settings.minScore}\n` +
+            `• Số lượng tối đa (topK): ${settings.topK}`,
           duration: settings.useReranker ? 3200 : 350, // Thời gian mô phỏng tương ứng
           timestamp: Date.now(),
         };
@@ -231,10 +224,11 @@ export const ChatPage = () => {
         const generateStep: AgentTraceStep = {
           type: "generate",
           label: `Tổng hợp câu trả lời (${result.model || "Gemini"})`,
-          detail: `Mô hình ${result.model || "Gemini"} đã sinh câu trả lời thành công.\n\n` +
-                  `• Số lượng trích dẫn chính thức: ${result.citations.length} trích dẫn\n` +
-                  `• Chế độ sinh câu trả lời: ${result.mode === "conversation-recall" ? "Tái gọi nhớ lịch sử hội thoại (Conversation Recall)" : "Tìm kiếm tài liệu RAG chính thức"}\n` +
-                  `• Trạng thái: ${result.notFound ? "Không tìm thấy thông tin chính xác (Fallback sang từ chối lịch sự)" : "Tìm thấy thông tin chính xác trong chính sách"}`,
+          detail:
+            `Mô hình ${result.model || "Gemini"} đã sinh câu trả lời thành công.\n\n` +
+            `• Số lượng trích dẫn chính thức: ${result.citations.length} trích dẫn\n` +
+            `• Chế độ sinh câu trả lời: ${result.mode === "conversation-recall" ? "Tái gọi nhớ lịch sử hội thoại (Conversation Recall)" : "Tìm kiếm tài liệu RAG chính thức"}\n` +
+            `• Trạng thái: ${result.notFound ? "Không tìm thấy thông tin chính xác (Fallback sang từ chối lịch sự)" : "Tìm thấy thông tin chính xác trong chính sách"}`,
           duration: 1200, // Thời gian sinh token trung bình
           timestamp: Date.now(),
         };
@@ -246,7 +240,8 @@ export const ChatPage = () => {
             subQueries: [],
             suggestedStrategy: "direct",
             keyEntities: [],
-            reasoning: "Truy vấn được thực thi trực tiếp bằng luồng Advanced RAG tĩnh (không thông qua vòng lặp suy luận Agentic).",
+            reasoning:
+              "Truy vấn được thực thi trực tiếp bằng luồng Advanced RAG tĩnh (không thông qua vòng lặp suy luận Agentic).",
           },
           steps: [retrieveStep, generateStep],
           isRunning: false,
@@ -270,9 +265,7 @@ export const ChatPage = () => {
 
     const handleError = (error: unknown): void => {
       updateAssistantMessage(assistantId, {
-        content: T.apiError(
-          error instanceof Error ? error.message : String(error),
-        ),
+        content: T.apiError(error instanceof Error ? error.message : String(error)),
         isError: true,
       });
       setWorkflowStatus(T.error);
@@ -312,9 +305,7 @@ export const ChatPage = () => {
               onToken: (text) => {
                 setMessages((cur) =>
                   cur.map((m) =>
-                    m.id === assistantId
-                      ? { ...m, content: `${m.content}${text}` }
-                      : m,
+                    m.id === assistantId ? { ...m, content: `${m.content}${text}` } : m,
                   ),
                 );
               },
@@ -360,9 +351,7 @@ export const ChatPage = () => {
               onToken: (text) => {
                 setMessages((cur) =>
                   cur.map((m) =>
-                    m.id === assistantId
-                      ? { ...m, content: `${m.content}${text}` }
-                      : m,
+                    m.id === assistantId ? { ...m, content: `${m.content}${text}` } : m,
                   ),
                 );
               },
@@ -446,8 +435,7 @@ export const ChatPage = () => {
             )}
             {messages.map((m) => {
               const isLastUserMsg =
-                m.role === "user" &&
-                m.id === messages.filter((x) => x.role === "user").at(-1)?.id;
+                m.role === "user" && m.id === messages.filter((x) => x.role === "user").at(-1)?.id;
               return isLastUserMsg ? (
                 <div key={m.id} ref={userMessageRef}>
                   <ChatBubble message={m} />
@@ -456,13 +444,9 @@ export const ChatPage = () => {
                 <ChatBubble key={m.id} message={m} />
               );
             })}
-            {agentMode &&
-              (agentTrace.steps.length > 0 || agentTrace.isRunning) && (
-                <AgentReasoningBar
-                  steps={agentTrace.steps}
-                  isRunning={agentTrace.isRunning}
-                />
-              )}
+            {agentMode && (agentTrace.steps.length > 0 || agentTrace.isRunning) && (
+              <AgentReasoningBar steps={agentTrace.steps} isRunning={agentTrace.isRunning} />
+            )}
             {isStreaming && !agentMode && (
               <div className="flex items-center gap-2 pl-11 text-sm text-slate-400">
                 <Loader2 className="size-3.5 animate-spin" /> {T.streaming}

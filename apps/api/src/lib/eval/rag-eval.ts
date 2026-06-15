@@ -271,9 +271,7 @@ export const faithfulness = (
     return tokens.slice(0, -1).map((t, i) => `${t}_${tokens[i + 1]}`);
   });
   const chunkBigramSet = new Set(chunkBigrams);
-  const chunkTokenSet = new Set(
-    retrievedChunks.flatMap((c) => tokenize(c.content)),
-  );
+  const chunkTokenSet = new Set(retrievedChunks.flatMap((c) => tokenize(c.content)));
 
   let groundedCount = 0;
   for (const sentence of sentences) {
@@ -282,9 +280,7 @@ export const faithfulness = (
 
     // Check if at least 30% of sentence bigrams appear in chunks
     if (bigrams.length > 0) {
-      const matchedBigrams = bigrams.filter((b) =>
-        chunkBigramSet.has(b),
-      ).length;
+      const matchedBigrams = bigrams.filter((b) => chunkBigramSet.has(b)).length;
       if (matchedBigrams / bigrams.length >= 0.3) {
         groundedCount++;
         continue;
@@ -323,8 +319,7 @@ export const answerRelevance = (question: string, answer: string): number => {
   // 1. Single token coverage (most important for Vietnamese)
   const singleTokens = questionTokens.filter((t) => t.length > 2);
   const matchedTokens = singleTokens.filter((t) => answerTokens.has(t));
-  const tokenScore =
-    singleTokens.length > 0 ? matchedTokens.length / singleTokens.length : 1;
+  const tokenScore = singleTokens.length > 0 ? matchedTokens.length / singleTokens.length : 1;
 
   // 2. N-gram coverage with partial matching
   // Instead of requiring exact n-gram match, give credit if ANY word from the
@@ -359,8 +354,7 @@ export const answerRelevance = (question: string, answer: string): number => {
   // "ngày phép", "khung lương", "thiết bị" should appear in answer
   const keyPhrases = significantBigrams.map((bg) => bg.replace("_", " "));
   const matchedKeyPhrases = keyPhrases.filter((kp) => answerLower.includes(kp));
-  const keyPhraseScore =
-    keyPhrases.length > 0 ? matchedKeyPhrases.length / keyPhrases.length : 1;
+  const keyPhraseScore = keyPhrases.length > 0 ? matchedKeyPhrases.length / keyPhrases.length : 1;
 
   // Combined: weighted average
   // Token coverage is most reliable for Vietnamese (handles paraphrasing)
@@ -430,34 +424,26 @@ export const aggregateMetrics = (
     : retrievalResults;
 
   const retN = answerableResults.length || 1; // avoid division by zero
-  const meanRecallAtK =
-    answerableResults.reduce((s, r) => s + r.recallAtK, 0) / retN;
-  const meanPrecisionAtK =
-    answerableResults.reduce((s, r) => s + r.precisionAtK, 0) / retN;
+  const meanRecallAtK = answerableResults.reduce((s, r) => s + r.recallAtK, 0) / retN;
+  const meanPrecisionAtK = answerableResults.reduce((s, r) => s + r.precisionAtK, 0) / retN;
   const mrr = answerableResults.reduce((s, r) => s + r.reciprocalRank, 0) / retN;
   const meanNdcgAtK = answerableResults.reduce((s, r) => s + r.ndcgAtK, 0) / retN;
-  const hitRate = answerableResults.length > 0
-    ? answerableResults.filter((r) => r.hit).length / answerableResults.length
-    : 0;
+  const hitRate =
+    answerableResults.length > 0
+      ? answerableResults.filter((r) => r.hit).length / answerableResults.length
+      : 0;
 
   const genN = generationResults.length;
   const meanFaithfulness =
-    genN > 0
-      ? generationResults.reduce((s, r) => s + r.faithfulness, 0) / genN
-      : 0;
+    genN > 0 ? generationResults.reduce((s, r) => s + r.faithfulness, 0) / genN : 0;
   const meanAnswerRelevance =
-    genN > 0
-      ? generationResults.reduce((s, r) => s + r.answerRelevance, 0) / genN
-      : 0;
+    genN > 0 ? generationResults.reduce((s, r) => s + r.answerRelevance, 0) / genN : 0;
 
   // Refusal Accuracy: only for unanswerable questions
-  const refusalResults = generationResults.filter(
-    (r) => r.refusalCorrect !== null,
-  );
+  const refusalResults = generationResults.filter((r) => r.refusalCorrect !== null);
   const refusalAccuracy =
     refusalResults.length > 0
-      ? refusalResults.filter((r) => r.refusalCorrect === true).length /
-        refusalResults.length
+      ? refusalResults.filter((r) => r.refusalCorrect === true).length / refusalResults.length
       : 1; // no unanswerable questions → trivially correct
 
   return {
@@ -505,9 +491,7 @@ export const evaluateRetrieval = (
 ): RetrievalEvalResult => {
   // Deduplicate retrieved policy IDs to avoid multiple chunks from the same policy
   // distorting the retrieval metrics (like NDCG > 1 or inflated Precision).
-  const rawRetrievedPolicyIds = retrievalResult.chunks
-    .slice(0, topK)
-    .map((c) => c.policyId);
+  const rawRetrievedPolicyIds = retrievalResult.chunks.slice(0, topK).map((c) => c.policyId);
   const retrievedPolicyIds = Array.from(new Set(rawRetrievedPolicyIds));
 
   return {
@@ -515,10 +499,7 @@ export const evaluateRetrieval = (
     question: question.question,
     recallAtK: recallAtK(question.expectedPolicyIds, retrievedPolicyIds),
     precisionAtK: precisionAtK(question.expectedPolicyIds, retrievedPolicyIds),
-    reciprocalRank: reciprocalRank(
-      question.expectedPolicyIds,
-      retrievedPolicyIds,
-    ),
+    reciprocalRank: reciprocalRank(question.expectedPolicyIds, retrievedPolicyIds),
     ndcgAtK: ndcgAtK(question.expectedPolicyIds, retrievedPolicyIds),
     hit: hit(question.expectedPolicyIds, retrievedPolicyIds),
     expectedPolicyIds: question.expectedPolicyIds,
@@ -535,10 +516,7 @@ export const evaluateGeneration = (
 ): GenerationEvalResult => ({
   questionId: question.id,
   question: question.question,
-  faithfulness: faithfulness(
-    generationResult.answer,
-    generationResult.retrievedChunks,
-  ),
+  faithfulness: faithfulness(generationResult.answer, generationResult.retrievedChunks),
   answerRelevance: answerRelevance(question.question, generationResult.answer),
   refusalCorrect: refusalAccuracy(
     question.answerable,

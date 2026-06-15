@@ -1,41 +1,35 @@
 import { type Request, type Response } from "express";
 import {
+  AskBody,
+  parseAskBody,
+  sendError,
+  sendStreamEvent,
+  streamAnswerTokens,
+} from "../helpers/apiHelpers.js";
+import { runAgent, type AgentOptions } from "../lib/agent/index.js";
+import { analyzeQuery } from "../lib/agent/query-analyzer.js";
+import { answerQuestionStream } from "../lib/answer.js";
+import {
   addMessage,
+  answerFromHistory,
   assertConversationOwner,
   createConversation,
   deleteConversation,
   getConversationMessages,
   getConversationStatus,
-  answerFromHistory,
+  getRecentMessages,
   listConversations,
   renameConversation,
-  getRecentMessages,
 } from "../lib/conversations.js";
-import { sanitizeInput } from "../lib/sanitize.js";
-import { analyzeQuery } from "../lib/agent/query-analyzer.js";
 import { getGreetingResponse, getThanksResponse } from "../lib/greeting.js";
-import { retrieveChunks } from "../lib/reindex.js";
-import { answerQuestion, answerQuestionStream } from "../lib/answer.js";
-import { runAgent, type AgentOptions } from "../lib/agent/index.js";
-import {
-  sendError,
-  sendStreamEvent,
-  parseAskBody,
-  streamAnswerTokens,
-  AskBody,
-} from "../helpers/apiHelpers.js";
+import { retrieveChunks } from "../lib/retrieval.js";
+import { sanitizeInput } from "../lib/sanitize.js";
 
-export const getConversationsList = async (
-  request: Request,
-  response: Response
-) => {
+export const getConversationsList = async (request: Request, response: Response) => {
   response.json({ conversations: await listConversations(request.user!.id) });
 };
 
-export const createNewConversation = async (
-  request: Request,
-  response: Response
-) => {
+export const createNewConversation = async (request: Request, response: Response) => {
   try {
     const title =
       typeof (request.body as { title?: unknown })?.title === "string"
@@ -50,7 +44,7 @@ export const createNewConversation = async (
 
 export const getMessagesByConversationId = async (
   request: Request<{ id: string }>,
-  response: Response
+  response: Response,
 ) => {
   try {
     await assertConversationOwner(request.params.id, request.user!.id);
@@ -61,16 +55,14 @@ export const getMessagesByConversationId = async (
     sendError(
       response,
       error,
-      error instanceof Error && error.message.includes("Access denied")
-        ? 403
-        : 400
+      error instanceof Error && error.message.includes("Access denied") ? 403 : 400,
     );
   }
 };
 
 export const getStatusByConversationId = async (
   request: Request<{ id: string }>,
-  response: Response
+  response: Response,
 ) => {
   try {
     await assertConversationOwner(request.params.id, request.user!.id);
@@ -80,16 +72,14 @@ export const getStatusByConversationId = async (
     sendError(
       response,
       error,
-      error instanceof Error && error.message.includes("Access denied")
-        ? 403
-        : 400
+      error instanceof Error && error.message.includes("Access denied") ? 403 : 400,
     );
   }
 };
 
 export const updateConversationTitle = async (
   request: Request<{ id: string }>,
-  response: Response
+  response: Response,
 ) => {
   try {
     await assertConversationOwner(request.params.id, request.user!.id);
@@ -100,11 +90,7 @@ export const updateConversationTitle = async (
     }
     const conversation = await renameConversation(request.params.id, title);
     if (!conversation) {
-      sendError(
-        response,
-        new Error(`Unknown conversation id: ${request.params.id}`),
-        404
-      );
+      sendError(response, new Error(`Unknown conversation id: ${request.params.id}`), 404);
       return;
     }
     response.json({ conversation });
@@ -112,16 +98,14 @@ export const updateConversationTitle = async (
     sendError(
       response,
       error,
-      error instanceof Error && error.message.includes("Access denied")
-        ? 403
-        : 400
+      error instanceof Error && error.message.includes("Access denied") ? 403 : 400,
     );
   }
 };
 
 export const deleteConversationById = async (
   request: Request<{ id: string }>,
-  response: Response
+  response: Response,
 ) => {
   try {
     await assertConversationOwner(request.params.id, request.user!.id);
@@ -131,16 +115,14 @@ export const deleteConversationById = async (
     sendError(
       response,
       error,
-      error instanceof Error && error.message.includes("Access denied")
-        ? 403
-        : 404
+      error instanceof Error && error.message.includes("Access denied") ? 403 : 404,
     );
   }
 };
 
 export const askConversationAgent = async (
   request: Request<{ id: string }, unknown, AskBody>,
-  response: Response
+  response: Response,
 ) => {
   response.setHeader("Content-Type", "text/event-stream");
   response.setHeader("Cache-Control", "no-cache, no-transform");
@@ -161,8 +143,34 @@ export const askConversationAgent = async (
 
     const sanitizeResult = sanitizeInput(body.question);
     if (!sanitizeResult.safe) {
-      sendStreamEvent(response, "error", { error: "Câu hỏi không hợp lệ." });
-      response.end();
+      const invalidAnswer =
+        "Xin lỗi, câu hỏi này không hợp lệ hoặc chứa các ký tự không được hỗ trợ. Bạn vui lòng điều chỉnh lại câu hỏi nhé!";
+      sendStreamEvent(response, "evidence", {
+        question: body.question,
+        mode: "gemini",
+        model: "input-sanitizer",
+        warning: null,
+        citations: [],
+        retrievedChunks: [],
+        externalSources: [],
+        conversationStatus: await getConversationStatus(conversationId),
+      });
+      await streamAnswerTokens(response, invalidAnswer);
+      await addMessage(conversationId, "assistant", invalidAnswer, []);
+      sendStreamEvent(response, "done", {
+        result: {
+          question: body.question,
+          answer: invalidAnswer,
+          mode: "gemini",
+          model: "input-sanitizer",
+          warning: null,
+          confidence: null,
+          citations: [],
+          retrievedChunks: [],
+          externalSources: [],
+          notFound: false,
+        },
+      });
       return;
     }
 
@@ -232,10 +240,7 @@ export const askConversationAgent = async (
     }
 
     if (analysis.intent === "meta") {
-      const metaAnswer = await answerFromHistory(
-        sanitizeResult.cleaned,
-        conversationId
-      );
+      const metaAnswer = await answerFromHistory(sanitizeResult.cleaned, conversationId);
       sendStreamEvent(response, "evidence", {
         question: body.question,
         mode: "conversation-recall",
@@ -356,10 +361,7 @@ export const askConversationAgent = async (
         });
       },
       onStep: (step) => {
-        sendStreamEvent(response, "agent_step", { ...step } as Record<
-          string,
-          unknown
-        >);
+        sendStreamEvent(response, "agent_step", { ...step } as Record<string, unknown>);
       },
       onToken: (text) => {
         sendStreamEvent(response, "token", { text });
@@ -413,7 +415,7 @@ export const askConversationAgent = async (
 
 export const askConversationStandard = async (
   request: Request<{ id: string }, unknown, AskBody>,
-  response: Response
+  response: Response,
 ) => {
   response.setHeader("Content-Type", "text/event-stream");
   response.setHeader("Cache-Control", "no-cache, no-transform");
@@ -434,8 +436,34 @@ export const askConversationStandard = async (
 
     const sanitizeResult = sanitizeInput(body.question);
     if (!sanitizeResult.safe) {
-      sendStreamEvent(response, "error", { error: "Câu hỏi không hợp lệ." });
-      response.end();
+      const invalidAnswer =
+        "Xin lỗi, câu hỏi này không hợp lệ hoặc chứa các ký tự không được hỗ trợ. Bạn vui lòng điều chỉnh lại câu hỏi nhé!";
+      sendStreamEvent(response, "evidence", {
+        question: body.question,
+        mode: "gemini",
+        model: "input-sanitizer",
+        warning: null,
+        citations: [],
+        retrievedChunks: [],
+        externalSources: [],
+        conversationStatus: await getConversationStatus(conversationId),
+      });
+      await streamAnswerTokens(response, invalidAnswer);
+      await addMessage(conversationId, "assistant", invalidAnswer, []);
+      sendStreamEvent(response, "done", {
+        result: {
+          question: body.question,
+          answer: invalidAnswer,
+          mode: "gemini",
+          model: "input-sanitizer",
+          warning: null,
+          confidence: null,
+          citations: [],
+          retrievedChunks: [],
+          externalSources: [],
+          notFound: false,
+        },
+      });
       return;
     }
 
@@ -505,10 +533,7 @@ export const askConversationStandard = async (
     }
 
     if (analysis.intent === "meta") {
-      const metaAnswer = await answerFromHistory(
-        sanitizeResult.cleaned,
-        conversationId
-      );
+      const metaAnswer = await answerFromHistory(sanitizeResult.cleaned, conversationId);
       sendStreamEvent(response, "evidence", {
         question: body.question,
         mode: "conversation-recall",
@@ -606,7 +631,7 @@ export const askConversationStandard = async (
     const { chunks: retrievedChunks } = await retrieveChunks(
       sanitizeResult.cleaned,
       body.topK,
-      isAdmin
+      isAdmin,
     );
 
     const recentMessages = await getRecentMessages(conversationId, 6);
@@ -617,11 +642,10 @@ export const askConversationStandard = async (
     let fullAnswer = "";
     let doneResult: Record<string, unknown> | null = null;
 
-    for await (const event of answerQuestionStream(
-      sanitizeResult.cleaned,
-      retrievedChunks,
-      { ...body.options, conversationHistory },
-    )) {
+    for await (const event of answerQuestionStream(sanitizeResult.cleaned, retrievedChunks, {
+      ...body.options,
+      conversationHistory,
+    })) {
       if (event.type === "token" && event.text) {
         fullAnswer += event.text;
         sendStreamEvent(response, "token", { text: event.text });

@@ -33,13 +33,9 @@ export interface StreamHandlers {
   readonly onDone: (result: AskResult) => void;
 }
 
-const getAuthToken = (): string | null =>
-  localStorage.getItem("rag-demo-token");
+const getAuthToken = (): string | null => localStorage.getItem("rag-demo-token");
 
-const requestJson = async <TResponse>(
-  path: string,
-  init?: RequestInit,
-): Promise<TResponse> => {
+const requestJson = async <TResponse>(path: string, init?: RequestInit): Promise<TResponse> => {
   const token = getAuthToken();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -51,9 +47,9 @@ const requestJson = async <TResponse>(
     headers,
   });
   if (!response.ok) {
-    const body = (await response
-      .json()
-      .catch(() => ({ error: response.statusText }))) as { error?: string };
+    const body = (await response.json().catch(() => ({ error: response.statusText }))) as {
+      error?: string;
+    };
     throw new Error(body.error ?? response.statusText);
   }
   if (response.status === 204) {
@@ -71,9 +67,7 @@ export const fetchQuestions = async (): Promise<readonly QuestionSpec[]> => {
 
 export const fetchGeminiModels = async (): Promise<readonly string[]> => {
   try {
-    const response = await requestJson<{ readonly models: readonly string[] }>(
-      "/api/models",
-    );
+    const response = await requestJson<{ readonly models: readonly string[] }>("/api/models");
     return response.models;
   } catch {
     return ["gemini-2.5-flash"];
@@ -81,9 +75,7 @@ export const fetchGeminiModels = async (): Promise<readonly string[]> => {
 };
 
 export const fetchPolicies = async (): Promise<readonly Policy[]> => {
-  const response = await requestJson<{ readonly policies: readonly Policy[] }>(
-    "/api/policies",
-  );
+  const response = await requestJson<{ readonly policies: readonly Policy[] }>("/api/policies");
   return response.policies;
 };
 
@@ -94,10 +86,7 @@ export const fetchPolicy = async (id: string): Promise<Policy> => {
   return response.policy;
 };
 
-export const updatePolicy = async (
-  id: string,
-  content: string,
-): Promise<Policy> => {
+export const updatePolicy = async (id: string, content: string): Promise<Policy> => {
   const response = await requestJson<{ readonly policy: Policy }>(
     `/api/policies/${encodeURIComponent(id)}`,
     {
@@ -108,20 +97,15 @@ export const updatePolicy = async (
   return response.policy;
 };
 
-export const createPolicy = async (
-  input: CreatePolicyInput,
-): Promise<Policy> => {
-  const response = await requestJson<{ readonly policy: Policy }>(
-    "/api/policies",
-    {
-      method: "POST",
-      body: JSON.stringify({
-        title: input.title,
-        category: input.category,
-        content: input.content,
-      }),
-    },
-  );
+export const createPolicy = async (input: CreatePolicyInput): Promise<Policy> => {
+  const response = await requestJson<{ readonly policy: Policy }>("/api/policies", {
+    method: "POST",
+    body: JSON.stringify({
+      title: input.title,
+      category: input.category,
+      content: input.content,
+    }),
+  });
   return response.policy;
 };
 
@@ -131,10 +115,7 @@ export const deletePolicy = async (id: string): Promise<void> => {
   });
 };
 
-export const togglePolicyPrivacy = async (
-  id: string,
-  isPrivate: boolean,
-): Promise<Policy> => {
+export const togglePolicyPrivacy = async (id: string, isPrivate: boolean): Promise<Policy> => {
   const response = await requestJson<{ readonly policy: Policy }>(
     `/api/policies/${encodeURIComponent(id)}/privacy`,
     {
@@ -145,10 +126,7 @@ export const togglePolicyPrivacy = async (
   return response.policy;
 };
 
-export const updatePolicyStatus = async (
-  id: string,
-  status: string,
-): Promise<Policy> => {
+export const updatePolicyStatus = async (id: string, status: string): Promise<Policy> => {
   const response = await requestJson<{ readonly policy: Policy }>(
     `/api/policies/${encodeURIComponent(id)}/status`,
     {
@@ -175,10 +153,7 @@ export const reseedPolicies = async (): Promise<{
     body: JSON.stringify({ locale: "vi" }),
   });
 
-export const askQuestion = async (
-  question: string,
-  settings: AskSettings,
-): Promise<AskResult> =>
+export const askQuestion = async (question: string, settings: AskSettings): Promise<AskResult> =>
   await requestJson("/api/ask", {
     method: "POST",
     body: JSON.stringify({
@@ -224,11 +199,9 @@ export const streamQuestion = async (
   question: string,
   settings: AskSettings,
   handlers: StreamHandlers,
-  conversationId?: string,
+  conversationId: string,
 ): Promise<void> => {
-  const url = conversationId
-    ? `${apiBaseUrl}/api/conversations/${encodeURIComponent(conversationId)}/ask`
-    : `${apiBaseUrl}/api/ask/stream`;
+  const url = `${apiBaseUrl}/api/conversations/${encodeURIComponent(conversationId)}/ask`;
   const token = getAuthToken();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -296,11 +269,9 @@ export const streamAgentQuestion = async (
   question: string,
   settings: AskSettings,
   handlers: AgentStreamHandlers,
-  conversationId?: string,
+  conversationId: string,
 ): Promise<void> => {
-  const url = conversationId
-    ? `${apiBaseUrl}/api/conversations/${encodeURIComponent(conversationId)}/ask/agent`
-    : `${apiBaseUrl}/api/ask/agent`;
+  const url = `${apiBaseUrl}/api/conversations/${encodeURIComponent(conversationId)}/ask/agent`;
   const token = getAuthToken();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -339,10 +310,7 @@ export const streamAgentQuestion = async (
   }
 };
 
-const parseAgentStreamEvents = (
-  chunk: string,
-  handlers: AgentStreamHandlers,
-): void => {
+const parseAgentStreamEvents = (chunk: string, handlers: AgentStreamHandlers): void => {
   const events = chunk.split("\n\n").filter((event) => event.trim().length > 0);
   for (const eventChunk of events) {
     const eventName = eventChunk
@@ -356,9 +324,7 @@ const parseAgentStreamEvents = (
     if (!eventName || !rawData) continue;
     const data = JSON.parse(rawData) as unknown;
     if (eventName === "agent_analysis") {
-      handlers.onAgentAnalysis?.(
-        (data as { queryAnalysis: AgentQueryAnalysis }).queryAnalysis,
-      );
+      handlers.onAgentAnalysis?.((data as { queryAnalysis: AgentQueryAnalysis }).queryAnalysis);
     }
     if (eventName === "agent_step") {
       handlers.onAgentStep?.(data as AgentTraceStep);
@@ -415,18 +381,14 @@ export interface ConversationMessageDto {
   readonly createdAt: string;
 }
 
-export const fetchConversations = async (): Promise<
-  readonly ConversationSummary[]
-> => {
+export const fetchConversations = async (): Promise<readonly ConversationSummary[]> => {
   const response = await requestJson<{
     readonly conversations: readonly ConversationSummary[];
   }>("/api/conversations");
   return response.conversations;
 };
 
-export const createConversation = async (
-  title?: string,
-): Promise<ConversationSummary> => {
+export const createConversation = async (title?: string): Promise<ConversationSummary> => {
   const response = await requestJson<{
     readonly conversation: ConversationSummary;
   }>("/api/conversations", {
@@ -441,8 +403,7 @@ export const fetchConversationMessages = async (
 ): Promise<{
   readonly messages: readonly ConversationMessageDto[];
   readonly status: ConversationStatus;
-}> =>
-  await requestJson(`/api/conversations/${encodeURIComponent(id)}/messages`);
+}> => await requestJson(`/api/conversations/${encodeURIComponent(id)}/messages`);
 
 export const deleteConversation = async (id: string): Promise<void> => {
   await requestJson<void>(`/api/conversations/${encodeURIComponent(id)}`, {

@@ -1,6 +1,6 @@
-import { closePool } from '../db/pool.js';
-import { runMigrations } from '../db/migrations.js';
-import { reindexPolicies } from '../lib/reindex.js';
+import { closePool } from "../db/pool.js";
+import { runMigrations } from "../db/migrations.js";
+import { reindexPolicies } from "../lib/reindex.js";
 
 const main = async (): Promise<void> => {
   await runMigrations();

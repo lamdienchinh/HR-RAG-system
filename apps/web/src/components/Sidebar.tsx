@@ -1,17 +1,7 @@
-import {
-  ChevronRight,
-  FileText,
-  GitBranch,
-  Loader2,
-  Settings,
-} from "lucide-react";
+import { ChevronRight, FileText, GitBranch, Loader2, Settings } from "lucide-react";
 import { useState } from "react";
 
-import type {
-  AgentQueryAnalysis,
-  AgentTraceStep,
-  EvidenceEvent,
-} from "../apis/api";
+import type { AgentQueryAnalysis, AgentTraceStep, EvidenceEvent } from "../apis/api";
 import type { AskResult } from "../types";
 import { useConfigStore } from "../store";
 import { Badge } from "./ui/badge";
@@ -59,9 +49,7 @@ const SummaryRow = ({
     type="button"
     onClick={onClick}
   >
-    <div
-      className={`grid size-8 shrink-0 place-items-center rounded-lg ${iconColor}`}
-    >
+    <div className={`grid size-8 shrink-0 place-items-center rounded-lg ${iconColor}`}>
       {spinning ? <Loader2 className="size-4 animate-spin" /> : icon}
     </div>
     <div className="min-w-0 flex-1">
@@ -69,9 +57,7 @@ const SummaryRow = ({
         <span className="text-xs font-semibold text-slate-800">{title}</span>
         {badge && <Badge className="text-[10px]">{badge}</Badge>}
       </div>
-      {sub && (
-        <div className="mt-0.5 truncate text-[10px] text-slate-400">{sub}</div>
-      )}
+      {sub && <div className="mt-0.5 truncate text-[10px] text-slate-400">{sub}</div>}
     </div>
     <ChevronRight className="size-4 shrink-0 text-slate-300" />
   </button>
@@ -93,8 +79,7 @@ export const Sidebar = ({
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const citations = activeResult?.citations ?? activeEvidence?.citations ?? [];
-  const retrievedChunks =
-    activeResult?.retrievedChunks ?? activeEvidence?.retrievedChunks ?? [];
+  const retrievedChunks = activeResult?.retrievedChunks ?? activeEvidence?.retrievedChunks ?? [];
   const bestScore = retrievedChunks[0]?.score;
 
   return (
@@ -106,11 +91,7 @@ export const Sidebar = ({
             icon={<GitBranch className="size-4" />}
             iconColor="bg-violet-100 text-violet-600"
             title="Luồng xử lý"
-            badge={
-              agentStrategy
-                ? (STRATEGY_SHORT[agentStrategy] ?? agentStrategy)
-                : undefined
-            }
+            badge={agentStrategy ? (STRATEGY_SHORT[agentStrategy] ?? agentStrategy) : undefined}
             sub={
               agentSteps.length > 0
                 ? `${agentSteps.length} bước · ${agentIterations ?? 1} lượt`

@@ -25,9 +25,7 @@ export const AgentReasoningBar = ({
         <>
           <Loader2 className="mt-0.5 size-3 shrink-0 animate-spin text-violet-500" />
           <span className="text-[11px] text-violet-500">
-            {latestStep
-              ? (STEP_LABELS[latestStep.type] ?? latestStep.label)
-              : "Đang suy nghĩ..."}
+            {latestStep ? (STEP_LABELS[latestStep.type] ?? latestStep.label) : "Đang suy nghĩ..."}
           </span>
         </>
       ) : null}

@@ -48,7 +48,7 @@ export const sanitizeInput = (input: string): SanitizeResult => {
 
   // Empty input
   if (trimmed.length === 0) {
-    return { safe: false, cleaned: '', reason: 'Empty input' };
+    return { safe: false, cleaned: "", reason: "Empty input" };
   }
 
   // Length check
@@ -72,7 +72,7 @@ export const sanitizeInput = (input: string): SanitizeResult => {
   }
 
   // Strip control characters (keep Vietnamese diacritics, newlines, tabs)
-  const cleaned = trimmed.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+  const cleaned = trimmed.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "");
 
   return { safe: true, cleaned, reason: null };
 };

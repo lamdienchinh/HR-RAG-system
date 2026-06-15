@@ -1,36 +1,49 @@
-import { AutoTokenizer, AutoModelForSequenceClassification, type PreTrainedTokenizer, type PreTrainedModel } from '@huggingface/transformers';
+import {
+  AutoTokenizer,
+  AutoModelForSequenceClassification,
+  type PreTrainedTokenizer,
+  type PreTrainedModel,
+} from "@huggingface/transformers";
 
 // Multilingual cross-encoder reranker (XLM-RoBERTa, supports 100+ languages including Vietnamese).
 // Replaces the English-only MS MARCO model. ~279MB INT8 quantized.
-const rerankerModelId = 'Xenova/bge-reranker-base';
+const rerankerModelId = "Xenova/bge-reranker-base";
 let tokenizer: PreTrainedTokenizer | null = null;
 let model: PreTrainedModel | null = null;
 
-const getRerankerModel = async (): Promise<{ tokenizer: PreTrainedTokenizer; model: PreTrainedModel }> => {
+const getRerankerModel = async (): Promise<{
+  tokenizer: PreTrainedTokenizer;
+  model: PreTrainedModel;
+}> => {
   if (!tokenizer || !model) {
     tokenizer = await AutoTokenizer.from_pretrained(rerankerModelId);
-    model = await AutoModelForSequenceClassification.from_pretrained(rerankerModelId, { dtype: 'q8' });
+    model = await AutoModelForSequenceClassification.from_pretrained(rerankerModelId, {
+      dtype: "q8",
+    });
   }
   return { tokenizer, model };
 };
 
 export const scoreRerankerPair = async (query: string, passage: string): Promise<number> => {
   const { tokenizer: tok, model: mdl } = await getRerankerModel();
-  
+
   // Let the tokenizer handle the truncation strictly based on TOKENS (max_length: 512) instead of characters!
-  const inputs = tok(query, { 
-    text_pair: passage, 
-    padding: true, 
-    truncation: true, 
-    max_length: 512 
+  const inputs = tok(query, {
+    text_pair: passage,
+    padding: true,
+    truncation: true,
+    max_length: 512,
   });
-  
+
   const output = await mdl(inputs);
   const logits = output.logits.data as Float32Array;
   return logits[0];
 };
 
-export const scoreRerankerPairs = async (query: string, passages: readonly string[]): Promise<readonly number[]> => {
+export const scoreRerankerPairs = async (
+  query: string,
+  passages: readonly string[],
+): Promise<readonly number[]> => {
   const { tokenizer: tok, model: mdl } = await getRerankerModel();
 
   // Duplicate the query to match the batch size of passages
@@ -41,12 +54,12 @@ export const scoreRerankerPairs = async (query: string, passages: readonly strin
     text_pair: passages as string[],
     padding: true,
     truncation: true,
-    max_length: 512 // Native model token limit
+    max_length: 512, // Native model token limit
   });
 
   const output = await mdl(inputs);
   const logits = output.logits.data as Float32Array;
-  
+
   // Flat Float32Array maps 1:1 to the batched candidates
   return Array.from(logits);
 };
@@ -118,10 +131,10 @@ export const rerankCandidates = async (
     id: candidate.id,
     rerankerScore: normalizedRerankerScores[index],
     fusionScore: candidate.fusionScore,
-    finalScore: rerankerWeight * normalizedRerankerScores[index] + fusionWeight * normalizedFusionScores[index],
+    finalScore:
+      rerankerWeight * normalizedRerankerScores[index] +
+      fusionWeight * normalizedFusionScores[index],
   }));
 
-  return results
-    .sort((left, right) => right.finalScore - left.finalScore)
-    .slice(0, topK);
+  return results.sort((left, right) => right.finalScore - left.finalScore).slice(0, topK);
 };

@@ -17,11 +17,7 @@ export type QueryIntent =
 
 export type QueryComplexity = "simple" | "multi_aspect" | "ambiguous";
 
-export type RetrievalStrategy =
-  | "direct"
-  | "decompose"
-  | "multi_retrieve"
-  | "clarify";
+export type RetrievalStrategy = "direct" | "decompose" | "multi_retrieve" | "clarify";
 
 export interface QueryAnalysis {
   readonly intent: QueryIntent;
@@ -54,11 +50,7 @@ const VALID_INTENTS = new Set<QueryIntent>([
   "injection",
 ]);
 
-const VALID_COMPLEXITIES = new Set<QueryComplexity>([
-  "simple",
-  "multi_aspect",
-  "ambiguous",
-]);
+const VALID_COMPLEXITIES = new Set<QueryComplexity>(["simple", "multi_aspect", "ambiguous"]);
 
 const VALID_STRATEGIES = new Set<RetrievalStrategy>([
   "direct",
@@ -174,10 +166,7 @@ export const parseAnalysis = (raw: string): QueryAnalysis => {
   try {
     parsed = JSON.parse(jsonMatch[0]) as Record<string, unknown>;
   } catch (err) {
-    throw new AnalysisParseError(
-      `JSON.parse failed: ${(err as Error).message}`,
-      raw,
-    );
+    throw new AnalysisParseError(`JSON.parse failed: ${(err as Error).message}`, raw);
   }
 
   const intent = VALID_INTENTS.has(parsed.intent as QueryIntent)
@@ -186,26 +175,16 @@ export const parseAnalysis = (raw: string): QueryAnalysis => {
         throw new AnalysisParseError(`Unknown intent: "${parsed.intent}"`, raw);
       })();
 
-  const complexity = VALID_COMPLEXITIES.has(
-    parsed.complexity as QueryComplexity,
-  )
+  const complexity = VALID_COMPLEXITIES.has(parsed.complexity as QueryComplexity)
     ? (parsed.complexity as QueryComplexity)
     : (() => {
-        throw new AnalysisParseError(
-          `Unknown complexity: "${parsed.complexity}"`,
-          raw,
-        );
+        throw new AnalysisParseError(`Unknown complexity: "${parsed.complexity}"`, raw);
       })();
 
-  const suggestedStrategy = VALID_STRATEGIES.has(
-    parsed.suggestedStrategy as RetrievalStrategy,
-  )
+  const suggestedStrategy = VALID_STRATEGIES.has(parsed.suggestedStrategy as RetrievalStrategy)
     ? (parsed.suggestedStrategy as RetrievalStrategy)
     : (() => {
-        throw new AnalysisParseError(
-          `Unknown strategy: "${parsed.suggestedStrategy}"`,
-          raw,
-        );
+        throw new AnalysisParseError(`Unknown strategy: "${parsed.suggestedStrategy}"`, raw);
       })();
 
   const subQueries = (
@@ -224,8 +203,7 @@ export const parseAnalysis = (raw: string): QueryAnalysis => {
       : []
   ).slice(0, MAX_KEY_ENTITIES);
 
-  const reasoning =
-    typeof parsed.reasoning === "string" ? parsed.reasoning.trim() : "";
+  const reasoning = typeof parsed.reasoning === "string" ? parsed.reasoning.trim() : "";
 
   return {
     intent,
@@ -267,10 +245,7 @@ export const enforceConsistency = (analysis: QueryAnalysis): QueryAnalysis => {
   }
 
   // meta intent should never produce sub-queries or key entities
-  if (
-    intent === "meta" &&
-    (analysis.subQueries.length > 0 || analysis.keyEntities.length > 0)
-  ) {
+  if (intent === "meta" && (analysis.subQueries.length > 0 || analysis.keyEntities.length > 0)) {
     return { ...analysis, subQueries: [], keyEntities: [] };
   }
 
@@ -314,11 +289,7 @@ export const analyzeQuery = async (
   let raw: string | undefined;
 
   try {
-    const result = await runGeminiPureAgent(
-      userMessage,
-      ANALYSIS_PROMPT,
-      "gemini-2.5-flash-lite",
-    );
+    const result = await runGeminiPureAgent(userMessage, ANALYSIS_PROMPT, "gemini-2.5-flash-lite");
     raw = result.text ?? undefined;
   } catch (err) {
     console.warn("[analyzeQuery] LLM call failed:", (err as Error).message);
@@ -335,12 +306,7 @@ export const analyzeQuery = async (
     return enforceConsistency(analysis);
   } catch (err) {
     if (err instanceof AnalysisParseError) {
-      console.warn(
-        "[analyzeQuery] Parse failed:",
-        err.message,
-        "| raw:",
-        err.raw,
-      );
+      console.warn("[analyzeQuery] Parse failed:", err.message, "| raw:", err.raw);
     }
     return fallbackAnalysis("parse_error");
   }

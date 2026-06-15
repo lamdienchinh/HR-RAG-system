@@ -28,7 +28,7 @@ export const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
 
 export const parseAskBody = (
-  body: unknown
+  body: unknown,
 ): {
   readonly question: string;
   readonly options: AnswerOptions;
@@ -36,21 +36,14 @@ export const parseAskBody = (
   readonly skipReranker: boolean;
   readonly embeddingProvider: "local" | "cloud";
 } => {
-  if (
-    !isRecord(body) ||
-    typeof body.question !== "string" ||
-    body.question.trim().length === 0
-  ) {
+  if (!isRecord(body) || typeof body.question !== "string" || body.question.trim().length === 0) {
     throw new Error("question is required");
   }
   const rawTopK = body.topK;
-  const topK =
-    typeof rawTopK === "number" && Number.isInteger(rawTopK) ? rawTopK : 6;
+  const topK = typeof rawTopK === "number" && Number.isInteger(rawTopK) ? rawTopK : 6;
   const rawMinScore = body.minScore;
   const minScore =
-    typeof rawMinScore === "number" && Number.isFinite(rawMinScore)
-      ? rawMinScore
-      : 0.05;
+    typeof rawMinScore === "number" && Number.isFinite(rawMinScore) ? rawMinScore : 0.05;
   const clampedTopK = Math.min(Math.max(topK, 1), 12);
   const geminiModel =
     typeof body.geminiModel === "string" && body.geminiModel.trim().length > 0
@@ -66,18 +59,16 @@ export const parseAskBody = (
     },
     topK: clampedTopK,
     skipReranker: body.skipReranker === true,
-    embeddingProvider: (body.embeddingProvider === "cloud" ? "cloud" : "local") as "local" | "cloud",
+    embeddingProvider: (body.embeddingProvider === "cloud" ? "cloud" : "local") as
+      | "local"
+      | "cloud",
   };
 };
 
 export const parseUpdatePolicyBody = (
-  body: unknown
+  body: unknown,
 ): { readonly content: string; readonly note: string } => {
-  if (
-    !isRecord(body) ||
-    typeof body.content !== "string" ||
-    body.content.trim().length === 0
-  ) {
+  if (!isRecord(body) || typeof body.content !== "string" || body.content.trim().length === 0) {
     throw new Error("content is required");
   }
   return {
@@ -92,7 +83,7 @@ export const parseUpdatePolicyBody = (
 const readStringField = (
   body: Record<string, unknown>,
   field: string,
-  fallback?: string
+  fallback?: string,
 ): string => {
   const value = body[field];
   if (typeof value === "string" && value.trim().length > 0) {
@@ -112,19 +103,11 @@ export const parseCreatePolicyBody = (body: unknown): CreatePolicyInput => {
     version: readStringField(body, "version", "2026.1"),
     status: readStringField(body, "status", "current"),
     sensitivity: readStringField(body, "sensitivity", "internal"),
-    content: readStringField(
-      body,
-      "content",
-      "# New Policy\n\nAdd policy details here."
-    ),
+    content: readStringField(body, "content", "# New Policy\n\nAdd policy details here."),
   };
 };
 
-export const sendError = (
-  response: Response,
-  error: unknown,
-  status = 400
-): void => {
+export const sendError = (response: Response, error: unknown, status = 400): void => {
   response.status(status).json({
     error: error instanceof Error ? error.message : String(error),
   });
@@ -133,7 +116,7 @@ export const sendError = (
 export const sendStreamEvent = (
   response: Response,
   event: string,
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
 ): void => {
   response.write(`event: ${event}\n`);
   response.write(`data: ${JSON.stringify(data)}\n\n`);
@@ -148,7 +131,7 @@ export const sleep = async (milliseconds: number): Promise<void> => {
 export const streamAnswerTokens = async (
   response: Response,
   answer: string,
-  baseDelayMs = 25
+  baseDelayMs = 25,
 ): Promise<void> => {
   const tokenGroups = answer.match(/\S+\s*|\n+/g) ?? [];
   for (const token of tokenGroups) {

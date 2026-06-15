@@ -37,9 +37,7 @@ export const ConversationSidebar = ({
   onDelete,
   refreshTrigger,
 }: ConversationSidebarProps) => {
-  const [conversations, setConversations] = useState<
-    readonly ConversationSummary[]
-  >([]);
+  const [conversations, setConversations] = useState<readonly ConversationSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
@@ -80,9 +78,7 @@ export const ConversationSidebar = ({
     }
     try {
       await renameConversation(id, title);
-      setConversations((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, title } : c)),
-      );
+      setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, title } : c)));
     } catch {
       // silent
     }
@@ -182,9 +178,7 @@ export const ConversationSidebar = ({
                     </div>
                   ) : (
                     <>
-                      <div className="truncate text-xs font-medium">
-                        {conv.title}
-                      </div>
+                      <div className="truncate text-xs font-medium">{conv.title}</div>
                       <div className="mt-0.5 text-[10px] opacity-50">
                         {conv.messageCount} tin · {relativeTime(conv.updatedAt)}
                       </div>

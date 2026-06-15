@@ -1,8 +1,5 @@
 import type { Policy, ChunkRecord } from "./types.js";
-
-// Core system configuration constants
-const MAX_CHUNK_SIZE = 800; // Strict upper limit of characters per chunk to optimize Embedding Model processing
-const OVERLAP_SENTENCES = 1; // Number of adjacent sentences shared between chunks to preserve semantic continuity
+import { MAX_CHUNK_SIZE, OVERLAP_SENTENCES } from "../constants/index.js";
 
 interface HierarchicalSection {
   readonly headings: readonly string[]; // Breadcrumb path of hierarchical headings (from parent to child)

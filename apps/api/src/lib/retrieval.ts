@@ -1,5 +1,6 @@
 import type { QueryResultRow } from "pg";
 import { pool } from "../db/pool.js";
+import { RRF_K, SYNONYM_MAP } from "../constants/index.js";
 import { embedText, toPgVector } from "./embeddings.js";
 import { rerankCandidates, type RerankCandidate } from "./reranker.js";
 import type { RetrievedChunk } from "./types.js";
@@ -27,104 +28,14 @@ interface FtsChunkRow extends QueryResultRow {
 }
 
 // Reciprocal Rank Fusion constant
-const rrfK = 60;
-const computeRrfScore = (rank: number): number => 1 / (rrfK + rank);
+const computeRrfScore = (rank: number): number => 1 / (RRF_K + rank);
 
 // Expand query with synonym/related terms for better FTS recall
 const expandQueryTerms = (question: string): string => {
-  const synonymMap: Record<string, readonly string[]> = {
-    // English
-    leave: ["time off", "vacation", "PTO", "annual leave", "sick leave", "absence"],
-    remote: ["work from home", "WFH", "telecommute", "hybrid", "remote work"],
-    wfh: ["work from home", "remote work", "remote", "telecommute"],
-    overtime: ["OT", "extra hours", "weekend work", "overtime pay"],
-    salary: ["compensation", "pay", "wage", "remuneration", "bonus"],
-    hire: ["onboarding", "recruitment", "new employee", "start date"],
-    resign: ["offboarding", "termination", "exit", "departure", "last day"],
-    equipment: ["laptop", "device", "hardware", "badge", "return"],
-    security: ["access control", "password", "authentication", "MFA", "data handling"],
-    policy: ["guideline", "rule", "regulation", "procedure"],
-    sick: ["illness", "medical", "sick leave", "health"],
-    parental: ["maternity", "paternity", "caregiver", "parental leave"],
-    // Vietnamese
-    phép: ["nghỉ phép", "ngày phép", "annual leave", "nghỉ", "phép năm"],
-    lương: ["mức lương", "khung lương", "compensation", "salary", "trả lương", "lương cơ bản"],
-    nghỉ: ["nghỉ phép", "nghỉ ốm", "vắng mặt", "leave", "nghỉ việc"],
-    ốm: ["nghỉ ốm", "sick leave", "bệnh", "y tế"],
-    "làm thêm": ["overtime", "OT", "làm thêm giờ", "tăng ca"],
-    "tăng ca": ["overtime", "OT", "làm thêm giờ", "làm thêm"],
-    "từ xa": ["remote", "WFH", "làm việc từ xa", "work from home"],
-    "thiết bị": ["laptop", "equipment", "tài sản", "máy tính"],
-    "truy cập": ["access", "quyền truy cập", "security", "bảo mật"],
-    onboarding: ["nhận việc", "bắt đầu", "nhân viên mới"],
-    offboarding: ["nghỉ việc", "thôi việc", "rời công ty"],
-    "thăng tiến": ["promotion", "cấp bậc", "lên cấp", "E4", "E5"],
-    junior: ["cấp bậc", "E3", "level", "entry"],
-    senior: ["E4", "cấp bậc", "level", "engineer"],
-    "đánh giá": ["performance", "review", "hiệu suất", "calibration"],
-    "chi phí": ["expense", "hoàn trả", "công tác", "travel"],
-    "nhân viên mới": [
-      "onboarding",
-      "nhận việc",
-      "thiết bị",
-      "laptop",
-      "truy cập",
-      "access control",
-      "new employee",
-    ],
-    "bắt đầu": ["onboarding", "nhận việc", "start date", "nhân viên mới"],
-    "quản lý": ["manager", "phê duyệt", "approval"],
-    "thai sản": ["parental leave", "maternity", "paternity", "nghỉ thai sản"], // FIXED: Corrected Vietnamese spelling typo ('thái sản' -> 'thai sản')
-    "thứ bảy": [
-      "thứ bảy",
-      "thứ 7",
-      "chủ nhật",
-      "cuối tuần",
-      "ngày nghỉ",
-      "lịch làm việc",
-      "ngày làm việc",
-      "giờ làm việc",
-      "working hours",
-    ],
-    "thứ 7": [
-      "thứ bảy",
-      "thứ 7",
-      "chủ nhật",
-      "cuối tuần",
-      "ngày nghỉ",
-      "lịch làm việc",
-      "ngày làm việc",
-      "giờ làm việc",
-      "working hours",
-    ],
-    "chủ nhật": [
-      "thứ bảy",
-      "thứ 7",
-      "chủ nhật",
-      "cuối tuần",
-      "ngày nghỉ",
-      "lịch làm việc",
-      "ngày làm việc",
-      "giờ làm việc",
-      "working hours",
-    ],
-    "cuối tuần": [
-      "thứ bảy",
-      "thứ 7",
-      "chủ nhật",
-      "cuối tuần",
-      "ngày nghỉ",
-      "lịch làm việc",
-      "ngày làm việc",
-      "giờ làm việc",
-      "working hours",
-    ],
-  };
-
   const lowerQuestion = question.toLowerCase();
   const expansions: string[] = [question];
 
-  for (const [trigger, synonyms] of Object.entries(synonymMap)) {
+  for (const [trigger, synonyms] of Object.entries(SYNONYM_MAP)) {
     if (lowerQuestion.includes(trigger)) {
       expansions.push(...synonyms);
     }
@@ -146,6 +57,7 @@ export const retrieveChunks = async (
   const candidatePool = topK * 3;
   const queryVector = toPgVector(await embedText(question, options?.embeddingProvider || "local"));
   const privacyFilter = isAdmin ? "" : "AND is_private = false";
+  const statusFilter = "AND status = 'current'";
 
   // REPEATABLE READ: consistent snapshot — if reindex swaps tables mid-query,
   // both reads see the same data (prevents inconsistent chunks)
@@ -161,7 +73,7 @@ export const retrieveChunks = async (
         SELECT id, policy_id, title, version, status, content, is_private,
                embedding <=> $1::vector AS distance
         FROM document_chunks
-        WHERE true ${privacyFilter}
+        WHERE true ${privacyFilter} ${statusFilter}
         ORDER BY embedding <=> $1::vector
         LIMIT $2
       `,
@@ -172,7 +84,7 @@ export const retrieveChunks = async (
         SELECT id, policy_id, title, version, status, content, is_private,
                ts_rank_cd(tsv, websearch_to_tsquery('simple', $1)) AS rank
         FROM document_chunks
-        WHERE tsv @@ websearch_to_tsquery('simple', $1) ${privacyFilter}
+        WHERE tsv @@ websearch_to_tsquery('simple', $1) ${privacyFilter} ${statusFilter}
         ORDER BY rank DESC
         LIMIT $2
       `,
@@ -255,7 +167,7 @@ export const retrieveChunks = async (
         score: score,
       };
     });
-    return { chunks };
+    return { chunks: mergeContiguousChunks(chunks) };
   }
 
   const rerankInput: RerankCandidate[] = diversified.map(([id, score]) => ({
@@ -281,5 +193,146 @@ export const retrieveChunks = async (
     };
   });
 
-  return { chunks };
+  return { chunks: mergeContiguousChunks(chunks) };
+};
+
+/**
+ * HELPER: Contiguous Chunk Merging
+ *
+ * PURPOSE: Groups and merges contiguous chunks (e.g. chunk-001 and chunk-002) of the same policy
+ * to prevent context window bloat, avoid header duplication, and present a cohesive text segment to the LLM.
+ * Non-contiguous chunks remain separate.
+ */
+const mergeContiguousChunks = (chunks: readonly RetrievedChunk[]): readonly RetrievedChunk[] => {
+  if (chunks.length <= 1) return chunks;
+
+  // 1. Group chunks by Policy ID
+  const policyGroups = new Map<string, RetrievedChunk[]>();
+  for (const chunk of chunks) {
+    const group = policyGroups.get(chunk.policyId) || [];
+    group.push(chunk);
+    policyGroups.set(chunk.policyId, group);
+  }
+
+  const mergedChunks: RetrievedChunk[] = [];
+  const processedIds = new Set<string>();
+
+  // 2. Iterate through original chunks to preserve similarity order
+  for (const chunk of chunks) {
+    if (processedIds.has(chunk.id)) continue;
+
+    // Parse sequence number from ID (e.g., "policy#chunk-001" -> 1)
+    const match = chunk.id.match(/#chunk-(\d+)$/);
+    if (!match) {
+      mergedChunks.push(chunk);
+      processedIds.add(chunk.id);
+      continue;
+    }
+
+    const currentNum = parseInt(match[1], 10);
+    const policyId = chunk.policyId;
+    const group = policyGroups.get(policyId) || [];
+
+    // Find contiguous blocks of next consecutive chunks
+    const contiguousBlock = [chunk];
+    processedIds.add(chunk.id);
+
+    let nextNum = currentNum + 1;
+    while (true) {
+      const nextChunk = group.find((c) => {
+        const m = c.id.match(/#chunk-(\d+)$/);
+        return m && parseInt(m[1], 10) === nextNum && !processedIds.has(c.id);
+      });
+
+      if (nextChunk) {
+        contiguousBlock.push(nextChunk);
+        processedIds.add(nextChunk.id);
+        nextNum++;
+      } else {
+        break;
+      }
+    }
+
+    // Find contiguous blocks of previous consecutive chunks
+    let prevNum = currentNum - 1;
+    while (true) {
+      const prevChunk = group.find((c) => {
+        const m = c.id.match(/#chunk-(\d+)$/);
+        return m && parseInt(m[1], 10) === prevNum && !processedIds.has(c.id);
+      });
+
+      if (prevChunk) {
+        contiguousBlock.unshift(prevChunk); // Prepend to the block
+        processedIds.add(prevChunk.id);
+        prevNum--;
+      } else {
+        break;
+      }
+    }
+
+    // 3. Package merged chunk or push original if single
+    if (contiguousBlock.length === 1) {
+      mergedChunks.push(chunk);
+    } else {
+      const maxScore = Math.max(...contiguousBlock.map((c) => c.score));
+      const minDistance = Math.min(...contiguousBlock.map((c) => c.distance));
+
+      // Concatenate content of contiguous chunks, deduplicating repeated headers and overlaps
+      let mergedContent = "";
+      contiguousBlock.forEach((c, i) => {
+        if (i === 0) {
+          mergedContent = c.content;
+        } else {
+          const cleanedNext = cleanNextChunkContent(mergedContent, c.content);
+          mergedContent += `\n\n--- [Phần tiếp theo của chính sách] ---\n\n${cleanedNext}`;
+        }
+      });
+
+      mergedChunks.push({
+        ...chunk,
+        id: contiguousBlock.map((c) => c.id).join("+"), // Combine IDs
+        content: mergedContent,
+        score: maxScore,
+        distance: minDistance,
+      });
+    }
+  }
+
+  return mergedChunks;
+};
+
+/**
+ * HELPER: Deduplicates overlapping sentences and repeated heading contexts
+ * from chunk B before merging it next to chunk A.
+ */
+const cleanNextChunkContent = (contentA: string, contentB: string): string => {
+  const linesA = contentA.split("\n").map((l) => l.trim());
+  const linesB = contentB.split("\n").map((l) => l.trim());
+
+  // 1. Strip identical leading heading lines from B
+  let hIndex = 0;
+  while (
+    hIndex < linesB.length &&
+    linesB[hIndex].startsWith("#") &&
+    linesA.includes(linesB[hIndex])
+  ) {
+    hIndex++;
+  }
+
+  let cleanB = linesB.slice(hIndex).join("\n").trim();
+
+  // 2. Strip overlapping sentence from the start of B
+  const sentencesB = cleanB
+    .split(/(?<=[.!?;])\s+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+  if (sentencesB.length > 0) {
+    const firstSentenceB = sentencesB[0];
+    const normalizedA = contentA.replace(/\s+/g, " ").trim();
+    if (normalizedA.endsWith(firstSentenceB)) {
+      cleanB = sentencesB.slice(1).join(" ").trim();
+    }
+  }
+
+  return cleanB;
 };

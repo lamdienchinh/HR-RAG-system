@@ -1,7 +1,6 @@
 import { config as loadEnv } from "dotenv";
 import { fileURLToPath } from "node:url";
 
-loadEnv({ path: fileURLToPath(new URL("../../../.env", import.meta.url)), quiet: true });
 loadEnv({ path: fileURLToPath(new URL("../.env", import.meta.url)), override: false, quiet: true });
 
 export interface AppConfig {

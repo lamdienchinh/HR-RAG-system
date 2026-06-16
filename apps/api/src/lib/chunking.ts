@@ -6,42 +6,6 @@ interface HierarchicalSection {
   readonly content: string; // Raw text content associated with this section
 }
 
-/**
- * STEP 1: DOCUMENT STRUCTURE-BASED PARSING
- *
- * PURPOSE: Splits the document into independent sections based on Markdown headings (H1 to H6).
- * It preserves the full heading path (breadcrumb) to maintain hierarchical context for each block.
- *
- * WHY IS IT NEEDED: Without parent headings, if the LLM retrieves a chunk from "Section a, Clause b",
- * it loses the vital context of "Article 1, Chapter I".
- *
- * EXAMPLE:
- *  - Input:
- *    # 1. Policies
- *    General introduction text...
- *    ## 1.1 Benefits
- *    Employee benefit details...
- *
- *  - Output:
- *    [
- *      {
- *        headings: ["# 1. Policies"],
- *        content: "General introduction text..."
- *      },
- *      {
- *        headings: ["# 1. Policies", "## 1.1 Benefits"],
- *        content: "Employee benefit details..."
- *      }
- *    ]
- */
-/**
- * Helper function to clean, normalize and sanitize raw document content.
- * - Converts Windows-style newlines (\r\n) to Unix (\n).
- * - Strips non-printable / control characters.
- * - Trims each line and collapses internal multiple spaces/tabs to a single space.
- * - Filters out decorative lines (markdown dividers like ---, ***, ___).
- * - Collapses consecutive empty lines (3 or more) to a single empty line (\n\n).
- */
 export const cleanDocumentText = (content: string): string => {
   if (!content) return "";
 
@@ -128,28 +92,6 @@ const parseHierarchicalSections = (content: string): readonly HierarchicalSectio
   return sections;
 };
 
-/**
- * STEP 2: RECURSIVE CHARACTER SPLITTER
- *
- * PURPOSE: Intelligently divides text by trying to split on separators in descending order
- * of structural significance (Paragraphs -> Single Newlines -> Sentences -> Words).
- *
- * WHY IS IT NEEDED: This is the industry-standard "golden rule" of chunking (similar to
- * LangChain's RecursiveCharacterTextSplitter). It ensures text breaks happen at natural boundaries,
- * avoiding abrupt middle-of-sentence splits that degrade vector semantic quality.
- *
- * EXAMPLE:
- *  - Input:
- *    text: "This is paragraph one.\n\nThis is paragraph two. It contains two sentences."
- *    maxLen: 35
- *
- *  - Output:
- *    [
- *      "This is paragraph one.",
- *      "This is paragraph two.",
- *      "It contains two sentences."
- *    ]
- */
 const recursiveSplit = (text: string, maxLen: number): readonly string[] => {
   const trimmed = text.trim();
   if (trimmed.length <= maxLen) return [trimmed]; // Avoid unnecessary recursion if chunk is already small enough
@@ -182,28 +124,6 @@ const recursiveSplit = (text: string, maxLen: number): readonly string[] => {
   return chunks;
 };
 
-/**
- * HELPER FUNCTION: MERGE PARTS
- *
- * PURPOSE: Greedily aggregates small text fragments (parts) together without exceeding maxLen.
- * If a single fragment already exceeds maxLen, it recursively splits it first before merging.
- *
- * WHY IS IT NEEDED: Splitting by paragraph/sentence yields fragments of varying sizes (often short).
- * This function packs consecutive sentences tightly into a single chunk up to maxLen to minimize
- * chunk fragmentation and optimize the LLM's context window.
- *
- * EXAMPLE:
- *  - Input:
- *    parts: ["Hello world.", "This is a test.", "Keep it short."],
- *    separator: " ",
- *    maxLen: 30
- *
- *  - Output:
- *    [
- *      "Hello world. This is a test.",
- *      "Keep it short."
- *    ]
- */
 const mergeParts = (
   parts: readonly string[],
   separator: string,
@@ -247,22 +167,6 @@ const mergeParts = (
   return results;
 };
 
-/**
- * OVERLAP TEXT EXTRACTION
- *
- * PURPOSE: Extracts the last N sentences of the previous chunk to act as an overlapping prefix for the next chunk.
- *
- * WHY IS IT NEEDED: Solves "The Boundary Problem". It provides context linking across chunk cuts,
- * allowing the Embedding Model to capture relations between ideas split across sequential blocks.
- *
- * EXAMPLE:
- *  - Input:
- *    text: "First sentence. Second sentence. Third sentence!",
- *    numSentences: 2
- *
- *  - Output:
- *    "Second sentence. Third sentence!"
- */
 const getOverlapText = (text: string, numSentences: number): string => {
   if (numSentences <= 0) return "";
 
@@ -278,36 +182,6 @@ const getOverlapText = (text: string, numSentences: number): string => {
 
 const padChunkNumber = (chunkIndex: number): string => String(chunkIndex + 1).padStart(3, "0");
 
-/**
- * MAIN FUNCTION: POLICY DOCUMENT CHUNKER (ORCHESTRATOR)
- *
- * PURPOSE: High-level entry point that processes raw policy documents into structured Chunk Records.
- * Combines Document Structure-based parsing and Recursive Character Splitting with overlaps.
- *
- * EXAMPLE:
- *  - Input policies:
- *    [
- *      {
- *        id: "POL_01",
- *        title: "Employee Leave Policy",
- *        content: "# 1. Leave\nEmployees get 15 days off.",
- *        version: "v1.0",
- *        status: "active"
- *      }
- *    ]
- *
- *  - Output Chunk Records:
- *    [
- *      {
- *        id: "POL_01#chunk-001",
- *        policyId: "POL_01",
- *        title: "Employee Leave Policy",
- *        version: "v1.0",
- *        status: "active",
- *        content: "# 1. Leave\nEmployees get 15 days off."
- *      }
- *    ]
- */
 export const createPolicyChunks = (policies: readonly Policy[]): readonly ChunkRecord[] =>
   policies.flatMap((policy) => {
     // Step 1: Parse the document into hierarchical sections

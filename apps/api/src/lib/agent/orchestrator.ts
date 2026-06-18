@@ -5,6 +5,7 @@ import {
   type AnswerStreamOptions,
 } from "../answer.js";
 import type { RetrievedChunk } from "../types.js";
+import { config } from "../../config.js";
 import { runGeminiAgenticStep, type AgenticStepMessage } from "./gemini-client.js";
 import { executeTool } from "./tools.js";
 import type { QueryAnalysis } from "./query-analyzer.js";
@@ -107,7 +108,7 @@ export const runAgent = async (question: string, options: AgentOptions): Promise
 
   let iterations = 0;
   let allRetrievedChunks: RetrievedChunk[] = [];
-  let finalAnswerModel = "gemma-4-26b-a4b-it";
+  let finalAnswerModel = config.geminiModel;
   let hasCalledPoliciesTool = false;
   let finalAnswerText = "";
   const executedToolSummaries = new Map<string, string>();
@@ -125,7 +126,7 @@ export const runAgent = async (question: string, options: AgentOptions): Promise
     const agentResult = await runGeminiAgenticStep(
       messages,
       systemInstruction,
-      "gemma-4-26b-a4b-it", // reasoning always defaults to Gemma 4 MoE (cheap & fast)
+      config.geminiModel, // Sử dụng mô hình chính xác đã cấu hình (ví dụ: gemini-3.5-flash) để tránh thử/sai gây chậm trễ
       0.15, // Low temperature for high precision and strict reasoning
     );
 

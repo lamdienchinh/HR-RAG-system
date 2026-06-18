@@ -276,7 +276,7 @@ export const runGeminiAgenticStep = async (
     throw new Error("GEMINI_API_KEY is missing");
   }
 
-  const configuredModel = preferredModel || "gemma-4-26b-a4b-it"; // Gemma 4 MoE là mặc định cho Agent Reasoning
+  const configuredModel = preferredModel || config.geminiModel || "gemini-2.5-flash"; // Dùng mô hình Gemini cấu hình sẵn làm mặc định cho Agent Reasoning
   const modelsToTry = [...new Set([configuredModel, ...CANDIDATE_MODELS])];
   const errors: string[] = [];
 
